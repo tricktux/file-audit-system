@@ -59,7 +59,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory("src")
-add_subdirectory("docs")
 
 option(ENABLE_TESTS "Build tests" OFF)
 if(ENABLE_TESTS)
