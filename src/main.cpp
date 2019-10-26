@@ -49,19 +49,29 @@ static int event_loop(void);
 
 // SIGTERM handler
 static void term_handler(int sig) {
-	syslog(LOG_WARNING, "shutting down...");
+  syslog(LOG_WARNING, "shutting down...");
   if (sig)
     signaled = 1;
-	signaled = 1;
+  signaled = 1;
 }
+
+class Audit {
+	int fd;
+
+	Audit() : fd(-1) {
+		fd = audit_open();
+	}
+};
 
 /*
  * main is started by auditd. See dispatcher in auditd.conf
  */
 int main() {
   struct sigaction sa;
+	struct audit_rule_data rule;
+	struct audit_rule_data *rulep = &rule;
 
-	// struct audit_rule_data rd;
+  // struct audit_rule_data rd;
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
   syslog(LOG_NOTICE, "starting...");
@@ -73,6 +83,11 @@ int main() {
     return 4;
   }
 #endif
+
+	if (audit_add_watch(&rulep, "/etc/") < 0) {
+		syslog(LOG_ERR, "Failed to add watch");
+		return 5;
+	}
 
   // register sighandlers
   sa.sa_flags = 0;
@@ -135,14 +150,14 @@ static int event_loop(void) {
 
     rc = readv(pipe_fd, vec, 2);
     if (rc == 0 || rc == -1) {
-      syslog(LOG_ERR, "rc == %d(%s)", rc, strerror(errno));
+      syslog(LOG_ERR, "readv error: rc == %d(%s)", rc, strerror(errno));
       break;
     }
 
     // handle events here. Just for illustration, we print
     // to syslog, but you will want to do something else.
-    syslog(LOG_NOTICE, "type=%d, payload size=%d", hdr.type, hdr.size);
-    syslog(LOG_NOTICE, "data=\"%.*s\"", hdr.size, (char *)data);
+    syslog(LOG_INFO, "type=%d, payload size=%d", hdr.type, hdr.size);
+    syslog(LOG_INFO, "data=\"%.*s\"", hdr.size, (char *)data);
 
   } while (!signaled);
 
