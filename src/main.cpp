@@ -39,6 +39,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#include "monitor.hpp"
+
 // Local data
 static volatile int signaled = 0;
 static int pipe_fd;
@@ -60,7 +62,7 @@ static void term_handler(int sig) {
  */
 int main() {
   struct sigaction sa;
-	// FREE THIS memory
+  // FREE THIS memory
   struct audit_rule_data *rulep =
       (audit_rule_data *)malloc(1 * sizeof(audit_rule_data));
 
@@ -158,6 +160,6 @@ static int event_loop(void) {
 
   } while (!signaled);
 
-	// free(rule);
+  // free(rule);
   return 0;
 }
