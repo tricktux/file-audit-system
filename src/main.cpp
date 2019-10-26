@@ -55,26 +55,21 @@ static void term_handler(int sig) {
   signaled = 1;
 }
 
-class Audit {
-	int fd;
-
-	Audit() : fd(-1) {
-		fd = audit_open();
-	}
-};
-
 /*
  * main is started by auditd. See dispatcher in auditd.conf
  */
 int main() {
   struct sigaction sa;
-	struct audit_rule_data rule;
-	struct audit_rule_data *rulep = &rule;
+	// FREE THIS memory
+  struct audit_rule_data *rulep =
+      (audit_rule_data *)malloc(1 * sizeof(audit_rule_data));
+
+  memset(&rulep, 0, sizeof(rulep));
 
   // struct audit_rule_data rd;
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
-  syslog(LOG_NOTICE, "starting...");
+  syslog(LOG_NOTICE, "starting file-monitor...");
 
 #ifndef DEBUG
   // Make sure we are root
@@ -84,10 +79,12 @@ int main() {
   }
 #endif
 
-	if (audit_add_watch(&rulep, "/etc/") < 0) {
-		syslog(LOG_ERR, "Failed to add watch");
-		return 5;
-	}
+  if (audit_add_dir(&rulep, "/etc/") < 0) {
+    syslog(LOG_ERR, "Failed to add watch to etc");
+    return 7;
+  }
+
+  syslog(LOG_NOTICE, "Success adding new rule!!!");
 
   // register sighandlers
   sa.sa_flags = 0;
@@ -161,5 +158,6 @@ static int event_loop(void) {
 
   } while (!signaled);
 
+	// free(rule);
   return 0;
 }
