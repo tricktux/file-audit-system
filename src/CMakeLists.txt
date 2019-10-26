@@ -1,5 +1,8 @@
 # All the source files for the bot.
-file(GLOB SOURCES "*.cpp")
+file(GLOB SOURCES
+	"${CMAKE_SOURCE_DIR}/src/main.cpp"
+	"${CMAKE_SOURCE_DIR}/src/monitor.cpp"
+	)
 
 include_directories(${CMAKE_SOURCE_DIR}/inc)
 
