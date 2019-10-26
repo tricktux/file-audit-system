@@ -49,6 +49,7 @@ static int event_loop(void);
 
 // SIGTERM handler
 static void term_handler(int sig) {
+	syslog(LOG_WARNING, "shutting down...");
   if (sig)
     signaled = 1;
 	signaled = 1;
