@@ -1,3 +1,5 @@
+.clangd/
+
 CMakeCache.txt
 CMakeFiles
 CMakeScripts
