@@ -42,20 +42,25 @@
 // Local data
 static volatile int signaled = 0;
 static int pipe_fd;
-static const char *pgm = "skeleton";
+static const char *pgm = "file-audit";
 
 // Local functions
 static int event_loop(void);
 
 // SIGTERM handler
-static void term_handler(int sig) { signaled = 1; }
+static void term_handler(int sig) {
+  if (sig)
+    signaled = 1;
+	signaled = 1;
+}
 
 /*
  * main is started by auditd. See dispatcher in auditd.conf
  */
-int main(int argc, char *argv[]) {
+int main() {
   struct sigaction sa;
 
+	struct audit_rule_data rd;
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
   syslog(LOG_NOTICE, "starting...");
@@ -116,7 +121,7 @@ static int event_loop(void) {
     rc = select(pipe_fd + 1, &fd, NULL, NULL, &tv);
     if (rc == 0)
       continue;
-    else if (rc == -1)
+    if (rc == -1)
       break;
 
     /* Get header first. it is fixed size */
