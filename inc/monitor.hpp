@@ -24,6 +24,9 @@ public:
 		if (rule != 0)
 			free(rule);
 	}
+
+	int init() override ;
+	int add_dir(const char *dir) override;
 };
 
 #endif
