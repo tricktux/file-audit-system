@@ -19,8 +19,20 @@
 #include "monitor.hpp"
 
 int LinuxAudit::init() {
-	return 8;
+  rule = reinterpret_cast<audit_rule_data *>(malloc(sizeof(audit_rule_data)));
+	if (!rule) {
+		syslog(LOG_ERR, "Failed to allocate data");
+		return -1;
+	}
+  memset(&rule, 0, sizeof(rule));
+
+	fd = audit_open();
+	if (fd < 0) {
+		syslog(LOG_ERR, "Failed to open communication with netlink");
+		return -2;
+	}
+
+  return 0;
 }
-int LinuxAudit::add_dir(const char *dir) {
-	return 8;
-}
+
+int LinuxAudit::add_dir(const char *dir) { return 8; }
