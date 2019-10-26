@@ -32,7 +32,24 @@ int LinuxAudit::init() {
 		return -2;
 	}
 
+	if (audit_is_enabled(fd) != 1) {
+		syslog(LOG_ERR, "auditd is not enabled");
+		return -3;
+	}
+
   return 0;
 }
 
-int LinuxAudit::add_dir(const char *dir) { return 8; }
+int LinuxAudit::add_dir(const char *dir) {
+	if (audit_add_dir(&rule, dir) < 0) {
+		syslog(LOG_ERR, "Failed to add watch to etc");
+		return -1;
+	}
+
+	if (audit_add_rule_data(fd, rule, AUDIT_FILTER_EXIT, AUDIT_ALWAYS) < 0) {
+		syslog(LOG_ERR, "Failed to add rule to audit");
+		return -2;
+	}
+
+	return 0;
+}

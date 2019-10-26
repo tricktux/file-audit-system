@@ -62,13 +62,7 @@ static void term_handler(int sig) {
  */
 int main() {
   struct sigaction sa;
-  // FREE THIS memory
-  struct audit_rule_data *rulep =
-      (audit_rule_data *)malloc(1 * sizeof(audit_rule_data));
 
-  memset(&rulep, 0, sizeof(rulep));
-
-  // struct audit_rule_data rd;
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
   syslog(LOG_NOTICE, "starting file-monitor...");
