@@ -11,6 +11,21 @@ cmake_minimum_required(VERSION 3.1)
 # Set ProjectName
 project(file-system-audit)
 
+# Set a default build type if none was specified
+set(default_build_type "Release")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+	set(default_build_type "Debug")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+	set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+		STRING "Choose the type of build." FORCE)
+	# Set the possible values of build type for cmake-gui
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+		"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 OPTION(ENABLE_ASAN "Enable ASAN" OFF)
 OPTION(ENABLE_USAN "Enable USAN" OFF)
 OPTION(ENABLE_TSAN "Enable TSAN" OFF)
@@ -65,3 +80,5 @@ if(ENABLE_TESTS)
 	enable_testing()
 	add_subdirectory("tests")
 endif()
+
+install (TARGETS file-monitor)

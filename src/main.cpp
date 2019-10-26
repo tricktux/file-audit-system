@@ -42,7 +42,7 @@
 // Local data
 static volatile int signaled = 0;
 static int pipe_fd;
-static const char *pgm = "file-audit";
+static const char *pgm = "file-monitor";
 
 // Local functions
 static int event_loop(void);
@@ -60,7 +60,7 @@ static void term_handler(int sig) {
 int main() {
   struct sigaction sa;
 
-	struct audit_rule_data rd;
+	// struct audit_rule_data rd;
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
   syslog(LOG_NOTICE, "starting...");
