@@ -75,10 +75,11 @@ int main() {
   }
 #endif
 
-  if (audit_add_dir(&rulep, "/etc/") < 0) {
-    syslog(LOG_ERR, "Failed to add watch to etc");
-    return 7;
-  }
+	LinuxAudit la;
+	if (la.init() < 0)
+		return 5;
+	if (la.add_dir("/etc") < 0)
+		return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");
 
