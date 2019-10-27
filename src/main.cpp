@@ -87,6 +87,7 @@ static int event_loop(void) {
   if (pb.init() != 0)
     return -2;
 
+  EventWorker ew;
   do {
     int rc = p.data_ready(1);
     if (rc == 0)
@@ -100,12 +101,19 @@ static int event_loop(void) {
     }
 
     const audit_dispatcher_header &hdr = pb.get_header();
-    std::string raw_data = pb.get_data();
+    // std::string raw_data = pb.get_data();
+    std::string raw_data =
+        std::string("type=") +
+				std::string(audit_msg_type_to_name(hdr.type)) +
+				std::string(", data=") +
+				pb.get_data();
+
+		ew.push(raw_data);
 
     // handle events here. Just for illustration, we print
     // to syslog, but you will want to do something else.
-    syslog(LOG_INFO, "type=%s, data=\"%.*s\"",
-				audit_msg_type_to_name(hdr.type), hdr.size, raw_data.c_str());
+    // syslog(LOG_INFO, "type=%s, data=\"%.*s\"",
+    // audit_msg_type_to_name(hdr.type), hdr.size, raw_data.c_str());
 
   } while (!SigHandler::signaled.load());
 

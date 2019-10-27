@@ -94,8 +94,8 @@ class EventWorker {
 public:
   EventWorker() : t(&EventWorker::wait_for_event, this) {}
   void wait_for_event();
-  void push(const char *data) {
-    if ((!data) || (!data[0]))
+  void push(const std::string &data) {
+    if (data.empty())
       return;
     std::unique_lock<std::mutex> lk(qm);
     q.emplace(data);
