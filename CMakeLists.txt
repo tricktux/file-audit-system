@@ -45,17 +45,24 @@ IF(ENABLE_TSAN)
 	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=thread")
 ENDIF()
 
+INCLUDE(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+
+# Build with c++17 support
+IF(COMPILER_SUPPORTS_CXX11)
+	SET(CMAKE_CXX_STANDARD 11)
+ELSE()
+	MESSAGE(FATAL_ERROR
+		"The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
+ENDIF()
+
 # add flags to release mode
-# by default won't use release mode
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS}")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-strict-aliasing")
 SET(CMAKE_CXX_FLAGS_RELEASE
 	"${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wfatal-errors -Wextra -Wunused -Werror")
 
-# always compile libnvc in debug mode
-# for trace message use LIBNVC_DEBUG_ARG_LIST to enable
-SET(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS}")
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
