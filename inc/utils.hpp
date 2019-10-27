@@ -12,6 +12,7 @@
 #include <syslog.h>
 #include <thread>
 #include <unistd.h>
+#include <sys/uio.h>
 
 class Pipe {
   int fd;
@@ -30,6 +31,22 @@ public:
       return -1;
     }
   }
+
+	// in seconds
+	int data_ready(int wait_time) {
+		struct timeval tv;
+		fd_set fds;
+
+		tv.tv_sec = wait_time;
+		tv.tv_usec = 0;
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+		return select(fd + 1, &fds, NULL, NULL, &tv);
+	}
+
+	ssize_t read(const struct iovec *vec, int iovcnt) {
+		return readv(fd, vec, iovcnt);
+	}
 };
 
 class SigHandler {

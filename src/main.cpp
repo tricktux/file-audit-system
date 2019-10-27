@@ -81,10 +81,13 @@ int main(int argc, char *argv[]) {
 }
 
 static int event_loop(void) {
+	Pipe p;
+	p.init();
 
   void *data;
   struct iovec vec[2];
   struct audit_dispatcher_header hdr;
+	int iovcnt = sizeof(vec) / sizeof(struct iovec);
 
   // allocate data structures
   data = malloc(MAX_AUDIT_MESSAGE_LENGTH);
@@ -96,19 +99,12 @@ static int event_loop(void) {
   memset(&hdr, 0, sizeof(hdr));
 
   do {
-    int rc;
-    struct timeval tv;
-    fd_set fd;
-
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
-    FD_ZERO(&fd);
-    FD_SET(pipe_fd, &fd);
-    rc = select(pipe_fd + 1, &fd, NULL, NULL, &tv);
+		int rc = p.data_ready(1);
     if (rc == 0)
       continue;
     if (rc == -1)
       break;
+
 
     /* Get header first. it is fixed size */
     vec[0].iov_base = (void *)&hdr;
@@ -118,7 +114,7 @@ static int event_loop(void) {
     vec[1].iov_base = data;
     vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
 
-    rc = readv(pipe_fd, vec, 2);
+    rc = p.read(&vec, iovcnt);
     if (rc == 0 || rc == -1) {
       syslog(LOG_ERR, "readv error: rc == %d(%s)", rc, strerror(errno));
       break;
