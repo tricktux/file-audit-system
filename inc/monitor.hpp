@@ -8,15 +8,16 @@
 #define MONITOR_HPP
 
 #include <libaudit.h>
-#include <string>
 #include <sstream>
+#include <string>
 
 class IDirMonitor {
+public:
   virtual int init() = 0;
   virtual int add_dir(const std::string &dir) = 0;
 };
 
-class LinuxAudit : IDirMonitor {
+class LinuxAudit : public IDirMonitor {
   int fd;
   struct audit_rule_data *rule;
 
@@ -59,6 +60,28 @@ public:
        << "exe: " << object.exe << '\n';
     return os;
   }
+};
+
+class IDirEventBuilder {
+public:
+	virtual DirEvent build() = 0;
+};
+
+
+class AuditEventBuilder : public IDirEventBuilder {
+  bool valid;
+  std::string raw_data;
+  bool validate();
+
+public:
+  AuditEventBuilder() : valid(false), raw_data(std::string()) {}
+  explicit AuditEventBuilder(const std::string &data) : raw_data(data) {
+    valid = validate();
+  }
+
+	DirEvent build() override {
+		return DirEvent();
+	}
 };
 
 #endif
