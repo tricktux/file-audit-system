@@ -10,4 +10,5 @@ include_directories(${CMAKE_SOURCE_DIR}/inc)
 add_executable(file-monitor ${SOURCES})
 
 target_link_libraries(file-monitor audit)
+target_link_libraries(file-monitor pthread)
 
