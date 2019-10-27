@@ -74,20 +74,23 @@ public:
       return -1;
     }
 
-    memset(data, 0, MAX_AUDIT_MESSAGE_LENGTH);
-    memset(&hdr, 0, sizeof(hdr));
-
-    /* Get header first. it is fixed size */
-    vec[0].iov_base = (void *)&hdr;
-    vec[0].iov_len = sizeof(hdr);
-
-    // Next payload
-    vec[1].iov_base = data;
-    vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
-
+		reset_data();
     return 0;
   }
 
+	void reset_data() {
+		memset(data, 0, MAX_AUDIT_MESSAGE_LENGTH);
+		memset(&hdr, 0, sizeof(hdr));
+
+		/* Get header first. it is fixed size */
+		vec[0].iov_base = (void *)&hdr;
+		vec[0].iov_len = sizeof(hdr);
+
+		// Next payload
+		vec[1].iov_base = data;
+		vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
+
+	}
   const audit_dispatcher_header &get_header() const { return hdr; }
   std::string get_data() const { return std::string((char *)data); }
 

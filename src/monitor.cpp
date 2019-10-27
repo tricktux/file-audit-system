@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <fstream>
 
 #include "monitor.hpp"
 #include "utils.hpp"
@@ -73,17 +74,23 @@ int LinuxAudit::add_dir(const std::string &dir) {
 }
 
 void EventWorker::wait_for_event() {
-	std::string buff;
-
+	std::ofstream ofs("/tmp/file-monitor");
 	while (!SigHandler::signaled.load()) {
+		std::string	buff;
 		{
 			std::unique_lock<std::mutex> lk(qm);
 			cv.wait(lk, [this]{ return !q.empty(); });
+			if (q.empty()) {
+				syslog(LOG_WARNING, "False alarm, queue is really empty");
+				continue;
+			}
 			buff = q.front();
 			q.pop();
 		}
 
-		buff = "[Thread logging]: " + buff;
-		syslog(LOG_NOTICE, buff.c_str());
+		if (ofs.is_open())
+			ofs << "[Threaded log]: " << buff << '\n';
+		else
+			syslog(LOG_ERR, "ofs stream not open");
 	}
 }

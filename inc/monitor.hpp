@@ -98,7 +98,7 @@ public:
     if (data.empty())
       return;
     std::unique_lock<std::mutex> lk(qm);
-    q.emplace(data);
+    q.push(data);
     cv.notify_one();
   }
 };

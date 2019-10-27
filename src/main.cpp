@@ -27,7 +27,7 @@
  * gcc skeleton.c -o skeleton -laudit
  */
 
-#include "libaudit.h"
+#include <libaudit.h>
 #include <atomic>
 #include <errno.h>
 #include <fcntl.h>
@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -95,6 +96,7 @@ static int event_loop(void) {
     if (rc == -1)
       break;
 
+		pb.reset_data();
     if ((rc = p.read(pb.iov, pb.iovcnt)) <= 0) {
       syslog(LOG_ERR, "readv error: rc == %d(%s)", rc, strerror(errno));
       break;
@@ -102,19 +104,11 @@ static int event_loop(void) {
 
     const audit_dispatcher_header &hdr = pb.get_header();
     // std::string raw_data = pb.get_data();
-    std::string raw_data =
-        std::string("type=") +
-				std::string(audit_msg_type_to_name(hdr.type)) +
-				std::string(", data=") +
-				pb.get_data();
+    std::string raw_data = std::string("type=") +
+                           std::string(audit_msg_type_to_name(hdr.type)) +
+                           std::string(", data=") + pb.get_data();
 
-		ew.push(raw_data);
-
-    // handle events here. Just for illustration, we print
-    // to syslog, but you will want to do something else.
-    // syslog(LOG_INFO, "type=%s, data=\"%.*s\"",
-    // audit_msg_type_to_name(hdr.type), hdr.size, raw_data.c_str());
-
+    ew.push(raw_data);
   } while (!SigHandler::signaled.load());
 
   return 0;
