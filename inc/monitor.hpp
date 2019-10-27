@@ -8,12 +8,12 @@
 #define MONITOR_HPP
 
 #include <condition_variable>
-#include <mutex>
-#include <thread>
 #include <libaudit.h>
+#include <mutex>
+#include <queue>
 #include <sstream>
 #include <string>
-#include <queue>
+#include <thread>
 
 class IDirMonitor {
 public:
@@ -68,9 +68,8 @@ public:
 
 class IDirEventBuilder {
 public:
-	virtual DirEvent build() = 0;
+  virtual DirEvent build() = 0;
 };
-
 
 class AuditEventBuilder : public IDirEventBuilder {
   bool valid;
@@ -83,26 +82,25 @@ public:
     valid = validate();
   }
 
-	DirEvent build() override {
-		return DirEvent();
-	}
+  DirEvent build() override { return DirEvent(); }
 };
 
 class EventWorker {
-	std::mutex qm;
-	std::condition_variable cv;
-	std::queue<std::string> q;
-	std::thread t;
+  std::mutex qm;
+  std::condition_variable cv;
+  std::queue<std::string> q;
+  std::thread t;
 
 public:
-	void wait_for_event();
-	void push(const char *data) {
-		if ((!data) || (!data[0]))
-			return;
-		std::unique_lock<std::mutex> lk(qm);
-		q.emplace(data);
-		cv.notify_one();
-	}
+  EventWorker() : t(&EventWorker::wait_for_event, this) {}
+  void wait_for_event();
+  void push(const char *data) {
+    if ((!data) || (!data[0]))
+      return;
+    std::unique_lock<std::mutex> lk(qm);
+    q.emplace(data);
+    cv.notify_one();
+  }
 };
 
 #endif
