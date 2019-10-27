@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include "monitor.hpp"
+#include "utils.hpp"
 
 const std::string LinuxAudit::FILTER_KEY = "file-monitor";
 
@@ -69,4 +70,19 @@ int LinuxAudit::add_dir(const std::string &dir) {
   }
 
   return 0;
+}
+
+void EventWorker::wait_for_event() {
+	std::string buff;
+
+	while (!SigHandler::signaled.load()) {
+		{
+			std::unique_lock<std::mutex> lk(qm);
+			cv.wait(lk, [this]{ return !q.empty(); });
+			buff = q.front();
+			q.pop();
+		}
+
+		syslog(LOG_NOTICE, buff.c_str());
+	}
 }

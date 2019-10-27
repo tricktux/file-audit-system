@@ -7,9 +7,13 @@
 #ifndef MONITOR_HPP
 #define MONITOR_HPP
 
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #include <libaudit.h>
 #include <sstream>
 #include <string>
+#include <queue>
 
 class IDirMonitor {
 public:
@@ -81,6 +85,23 @@ public:
 
 	DirEvent build() override {
 		return DirEvent();
+	}
+};
+
+class EventWorker {
+	std::mutex qm;
+	std::condition_variable cv;
+	std::queue<std::string> q;
+	std::thread t;
+
+public:
+	void wait_for_event();
+	void push(const char *data) {
+		if ((!data) || (!data[0]))
+			return;
+		std::unique_lock<std::mutex> lk(qm);
+		q.emplace(data);
+		cv.notify_one();
 	}
 };
 

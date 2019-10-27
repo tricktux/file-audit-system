@@ -9,10 +9,10 @@
 
 #include <atomic>
 #include <libaudit.h>
+#include <queue>
 #include <signal.h>
 #include <sys/uio.h>
 #include <syslog.h>
-#include <thread>
 #include <unistd.h>
 
 class Pipe {
@@ -52,6 +52,7 @@ public:
   }
 };
 
+// Growth: Create a IPipeBuffer interface
 class AuditDataPipeBuffer {
   void *data;
   struct iovec vec[2];
@@ -59,8 +60,8 @@ class AuditDataPipeBuffer {
 
 public:
   AuditDataPipeBuffer() : data(nullptr), iov(&vec[0]), iovcnt(-1) {
-		iovcnt = sizeof(vec) / sizeof(struct iovec);
-	}
+    iovcnt = sizeof(vec) / sizeof(struct iovec);
+  }
   ~AuditDataPipeBuffer() {
     if (data)
       free(data);
@@ -87,12 +88,8 @@ public:
     return 0;
   }
 
-	const audit_dispatcher_header& get_header() const {
-		return hdr;
-	}
-	std::string get_data() const {
-		return std::string((char *) data);
-	}
+  const audit_dispatcher_header &get_header() const { return hdr; }
+  std::string get_data() const { return std::string((char *)data); }
 
   const struct iovec *iov;
   int iovcnt;
