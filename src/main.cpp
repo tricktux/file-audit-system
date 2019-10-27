@@ -45,20 +45,16 @@
 
 // Local data
 static int pipe_fd;
-static const char *pgm = "file-monitor";
 
 // Local functions
 static int event_loop(void);
 
 std::atomic<bool> SigHandler::signaled{false};
 
-/*
- * main is started by auditd. See dispatcher in auditd.conf
- */
-int main() {
+int main(int argc, char *argv[]) {
   setlocale(LC_ALL, "");
-  openlog(pgm, LOG_PID, LOG_DAEMON);
-  syslog(LOG_NOTICE, "Starting file-monitor...");
+  openlog(argv[0], LOG_PID, LOG_DAEMON);
+  syslog(LOG_NOTICE, "Starting %s with %d args...", argv[0], argc);
 
 #ifndef DEBUG
   // Make sure we are root
@@ -67,6 +63,10 @@ int main() {
     return 4;
   }
 #endif
+
+	SigHandler::sig_register(SIGTERM);
+	SigHandler::sig_register(SIGCHLD);
+	SigHandler::sig_register(SIGHUP);
 
 	LinuxAudit la;
 	if (la.init() < 0)
@@ -81,6 +81,7 @@ int main() {
 }
 
 static int event_loop(void) {
+
   void *data;
   struct iovec vec[2];
   struct audit_dispatcher_header hdr;
@@ -130,6 +131,5 @@ static int event_loop(void) {
 
   } while (!SigHandler::signaled.load());
 
-  // free(rule);
   return 0;
 }

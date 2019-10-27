@@ -13,20 +13,6 @@
 #include <thread>
 #include <unistd.h>
 
-class ILog {
-public:
-  virtual int init() = 0;
-  virtual void log(int severity, const char *msg) = 0;
-
-  ILog();
-};
-
-class SysLog : ILog {
-
-public:
-  SysLog();
-};
-
 class Pipe {
   int fd;
 
