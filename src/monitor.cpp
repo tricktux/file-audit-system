@@ -83,6 +83,7 @@ void EventWorker::wait_for_event() {
 			q.pop();
 		}
 
+		buff = "[Thread logging]: " + buff;
 		syslog(LOG_NOTICE, buff.c_str());
 	}
 }
