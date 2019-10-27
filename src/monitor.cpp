@@ -4,7 +4,7 @@
 /// @version  0.0
 /// @date Oct 26 2019
 
-#include "libaudit.h"
+#include <libaudit.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
@@ -37,14 +37,20 @@ int LinuxAudit::init() {
 		return -3;
 	}
 
+	// Remove all previous rules
+
   return 0;
 }
 
 int LinuxAudit::add_dir(const char *dir) {
 	if (audit_add_dir(&rule, dir) < 0) {
-		syslog(LOG_ERR, "Failed to add watch to etc");
+		syslog(LOG_ERR, "Failed to add watch to dir: '%s'", dir);
 		return -1;
 	}
+
+	/// There does not seem a way to get this rule. Just try to delete ahead of 
+	/// time, in case it escaped us before
+	audit_delete_rule_data(fd, rule, AUDIT_FILTER_EXIT, AUDIT_ALWAYS);
 
 	if (audit_add_rule_data(fd, rule, AUDIT_FILTER_EXIT, AUDIT_ALWAYS) < 0) {
 		syslog(LOG_ERR, "Failed to add rule to audit");

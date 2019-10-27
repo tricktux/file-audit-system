@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
 
 static int event_loop(void) {
   Pipe p;
-  p.init();
+  if (p.init() != 0)
+		return -1;
 
   void *data;
   struct iovec vec[2];
@@ -90,7 +91,7 @@ static int event_loop(void) {
   data = malloc(MAX_AUDIT_MESSAGE_LENGTH);
   if (data == NULL) {
     syslog(LOG_ERR, "Cannot allocate buffer");
-    return 1;
+    return -2;
   }
   memset(data, 0, MAX_AUDIT_MESSAGE_LENGTH);
   memset(&hdr, 0, sizeof(hdr));
