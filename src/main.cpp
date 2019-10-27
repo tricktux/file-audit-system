@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   LinuxAudit la;
   if (la.init() < 0)
     return 5;
-  if (la.add_dir("/etc") < 0)
+  if (la.add_dir("/home/reinaldo/.cache") < 0)
     return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");
@@ -104,9 +104,8 @@ static int event_loop(void) {
 
     // handle events here. Just for illustration, we print
     // to syslog, but you will want to do something else.
-    syslog(LOG_INFO, "type=%s, payload size=%d",
-           audit_msg_type_to_name(hdr.type), hdr.size);
-    syslog(LOG_INFO, "data=\"%.*s\"", hdr.size, raw_data.c_str());
+    syslog(LOG_INFO, "type=%s, data=\"%.*s\"",
+				audit_msg_type_to_name(hdr.type), hdr.size, raw_data.c_str());
 
   } while (!SigHandler::signaled.load());
 
