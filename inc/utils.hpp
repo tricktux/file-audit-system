@@ -7,7 +7,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-#include <mutex>
+#include <atomic>
 #include <signal.h>
 #include <syslog.h>
 #include <thread>
@@ -27,14 +27,14 @@ public:
   SysLog();
 };
 
-class StdIn {
+class Pipe {
   int fd;
 
 public:
-  StdIn() : fd(-1) {}
+  Pipe() : fd(-1) {}
 
   int init() {
-    if ((fd = dup(0)) < 0) {
+    if ((fd = dup(STDIN_FILENO)) < 0) {
       syslog(LOG_ERR, "Failed to duplicate stdin");
       return -1;
     }
@@ -47,31 +47,21 @@ public:
 };
 
 class SigHandler {
-  std::mutex m;
-  bool signaled = false;
-  struct sigaction sa;
 
-  void sig_handler(int sig) {
-    syslog(LOG_ALERT, "Received terminal signal %d", sig);
-    std::unique_lock<std::mutex> ul(m);
-    signaled = true;
+  static void sig_handler(int sig) {
+    syslog(LOG_ERR, "Received terminal signal %d", sig);
+		SigHandler::signaled.store(true);
   }
 
 public:
-  SigHandler() {
-    sa.sa_flags = 0;
-    sa.sa_handler = sig_handler;
-    (void)chdir("/");
-  }
+	static std::atomic<bool> signaled;
 
-  int sig_register(int sig) {
-    sigaction(sig, &sa, NULL);
-    sa.sa_handler = sig_handler;
-    sigemptyset(&sa.sa_mask);
-  }
-  bool get_signaled() {
-    std::unique_lock<std::mutex> ul(m);
-    return signaled;
+  static int sig_register(int sig) {
+		if (signal(sig, SigHandler::sig_handler) == SIG_ERR) {
+			syslog(LOG_ERR, "Failed to set sigaction");
+			return -1;
+		}
+		return 0;
   }
 };
 

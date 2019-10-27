@@ -38,16 +38,19 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+#include <atomic>
 
 #include "monitor.hpp"
+#include "utils.hpp"
 
 // Local data
-static volatile int signaled = 0;
 static int pipe_fd;
 static const char *pgm = "file-monitor";
 
 // Local functions
 static int event_loop(void);
+
+std::atomic<bool> SigHandler::signaled{false};
 
 /*
  * main is started by auditd. See dispatcher in auditd.conf
@@ -55,7 +58,7 @@ static int event_loop(void);
 int main() {
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
-  syslog(LOG_NOTICE, "starting file-monitor...");
+  syslog(LOG_NOTICE, "Starting file-monitor...");
 
 #ifndef DEBUG
   // Make sure we are root
@@ -72,12 +75,6 @@ int main() {
 		return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");
-
-  // change over to pipe_fd
-  pipe_fd = dup(0);
-  close(0);
-  open("/dev/null", O_RDONLY);
-  fcntl(pipe_fd, F_SETFD, FD_CLOEXEC);
 
   // Start the program
   return event_loop();
@@ -131,7 +128,7 @@ static int event_loop(void) {
     syslog(LOG_INFO, "type=%d, payload size=%d", hdr.type, hdr.size);
     syslog(LOG_INFO, "data=\"%.*s\"", hdr.size, (char *)data);
 
-  } while (!signaled);
+  } while (!SigHandler::signaled.load());
 
   // free(rule);
   return 0;
