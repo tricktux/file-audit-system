@@ -28,6 +28,7 @@
  */
 
 #include "libaudit.h"
+#include <atomic>
 #include <errno.h>
 #include <fcntl.h>
 #include <locale.h>
@@ -38,13 +39,9 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <atomic>
 
 #include "monitor.hpp"
 #include "utils.hpp"
-
-// Local data
-static int pipe_fd;
 
 // Local functions
 static int event_loop(void);
@@ -64,15 +61,15 @@ int main(int argc, char *argv[]) {
   }
 #endif
 
-	SigHandler::sig_register(SIGTERM);
-	SigHandler::sig_register(SIGCHLD);
-	SigHandler::sig_register(SIGHUP);
+  SigHandler::sig_register(SIGTERM);
+  SigHandler::sig_register(SIGCHLD);
+  SigHandler::sig_register(SIGHUP);
 
-	LinuxAudit la;
-	if (la.init() < 0)
-		return 5;
-	if (la.add_dir("/etc") < 0)
-		return 6;
+  LinuxAudit la;
+  if (la.init() < 0)
+    return 5;
+  if (la.add_dir("/etc") < 0)
+    return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");
 
@@ -81,13 +78,13 @@ int main(int argc, char *argv[]) {
 }
 
 static int event_loop(void) {
-	Pipe p;
-	p.init();
+  Pipe p;
+  p.init();
 
   void *data;
   struct iovec vec[2];
   struct audit_dispatcher_header hdr;
-	int iovcnt = sizeof(vec) / sizeof(struct iovec);
+  int iovcnt = sizeof(vec) / sizeof(struct iovec);
 
   // allocate data structures
   data = malloc(MAX_AUDIT_MESSAGE_LENGTH);
@@ -99,12 +96,11 @@ static int event_loop(void) {
   memset(&hdr, 0, sizeof(hdr));
 
   do {
-		int rc = p.data_ready(1);
+    int rc = p.data_ready(1);
     if (rc == 0)
       continue;
     if (rc == -1)
       break;
-
 
     /* Get header first. it is fixed size */
     vec[0].iov_base = (void *)&hdr;
@@ -114,8 +110,7 @@ static int event_loop(void) {
     vec[1].iov_base = data;
     vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
 
-    rc = p.read(&vec, iovcnt);
-    if (rc == 0 || rc == -1) {
+    if ((rc = p.read(&vec[0], iovcnt)) <= 0) {
       syslog(LOG_ERR, "readv error: rc == %d(%s)", rc, strerror(errno));
       break;
     }

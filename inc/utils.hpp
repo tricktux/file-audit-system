@@ -28,8 +28,10 @@ public:
 
     if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
       syslog(LOG_ERR, "Failed to duplicate stdin");
-      return -1;
+      return -2;
     }
+
+		return 0;
   }
 
 	// in seconds
