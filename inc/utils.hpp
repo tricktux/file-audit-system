@@ -58,7 +58,9 @@ class AuditDataPipeBuffer {
   struct audit_dispatcher_header hdr;
 
 public:
-  AuditDataPipeBuffer() : data(nullptr), iov(&vec[0]), iovcnt(-1) {}
+  AuditDataPipeBuffer() : data(nullptr), iov(&vec[0]), iovcnt(-1) {
+		iovcnt = sizeof(vec) / sizeof(struct iovec);
+	}
   ~AuditDataPipeBuffer() {
     if (data)
       free(data);
