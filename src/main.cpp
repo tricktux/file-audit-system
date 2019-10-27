@@ -79,13 +79,13 @@ int main(int argc, char *argv[]) {
 
 static int event_loop(void) {
   Pipe p;
-	AuditDataPipeBuffer pb;
+  AuditDataPipeBuffer pb;
 
   if (p.init() != 0)
-		return -1;
+    return -1;
 
-	if (pb.init() != 0)
-		return -2;
+  if (pb.init() != 0)
+    return -2;
 
   do {
     int rc = p.data_ready(1);
@@ -99,12 +99,13 @@ static int event_loop(void) {
       break;
     }
 
-		const audit_dispatcher_header &hdr = pb.get_header();
-		std::string raw_data = pb.get_data();
+    const audit_dispatcher_header &hdr = pb.get_header();
+    std::string raw_data = pb.get_data();
 
     // handle events here. Just for illustration, we print
     // to syslog, but you will want to do something else.
-    syslog(LOG_INFO, "type=%d, payload size=%d", hdr.type, hdr.size);
+    syslog(LOG_INFO, "type=%s, payload size=%d",
+           audit_msg_type_to_name(hdr.type), hdr.size);
     syslog(LOG_INFO, "data=\"%.*s\"", hdr.size, raw_data.c_str());
 
   } while (!SigHandler::signaled.load());
