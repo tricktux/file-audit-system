@@ -49,20 +49,10 @@ static const char *pgm = "file-monitor";
 // Local functions
 static int event_loop(void);
 
-// SIGTERM handler
-static void term_handler(int sig) {
-  syslog(LOG_WARNING, "shutting down...");
-  if (sig)
-    signaled = 1;
-  signaled = 1;
-}
-
 /*
  * main is started by auditd. See dispatcher in auditd.conf
  */
 int main() {
-  struct sigaction sa;
-
   setlocale(LC_ALL, "");
   openlog(pgm, LOG_PID, LOG_DAEMON);
   syslog(LOG_NOTICE, "starting file-monitor...");
@@ -82,18 +72,6 @@ int main() {
 		return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");
-
-  // register sighandlers
-  sa.sa_flags = 0;
-  sa.sa_handler = term_handler;
-  sigemptyset(&sa.sa_mask);
-  sigaction(SIGTERM, &sa, NULL);
-  sa.sa_handler = term_handler;
-  sigemptyset(&sa.sa_mask);
-  sigaction(SIGCHLD, &sa, NULL);
-  sa.sa_handler = SIG_IGN;
-  sigaction(SIGHUP, &sa, NULL);
-  (void)chdir("/");
 
   // change over to pipe_fd
   pipe_fd = dup(0);
