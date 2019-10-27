@@ -19,7 +19,7 @@
 
 #include "monitor.hpp"
 
-const std::string LinuxAudit::FILTER_KEY = "file-monitor";
+std::string LinuxAudit::FILTER_KEY = "file-monitor";
 
 int LinuxAudit::init() {
   rule = reinterpret_cast<audit_rule_data *>(malloc(sizeof(audit_rule_data)));

@@ -9,6 +9,7 @@
 
 #include <libaudit.h>
 #include <string>
+#include <sstream>
 
 class IDirMonitor {
   virtual int init() = 0;
@@ -36,6 +37,28 @@ public:
 
   int init() override;
   int add_dir(const std::string &dir) override;
+};
+
+class DirEvent {
+public:
+  DirEvent()
+      : pid(-1), uid(-1), file(std::string()), timestamp(std::string()),
+        exe(std::string()) {}
+
+  int pid;
+  int uid;
+  std::string file;
+  std::string timestamp;
+  std::string exe;
+
+  friend std::ostream &operator<<(std::ostream &os, const DirEvent &object) {
+    os << "pid: " << object.pid << '\n'
+       << "uid: " << object.uid << '\n'
+       << "file: " << object.file << '\n'
+       << "timestamp: " << object.timestamp << '\n'
+       << "exe: " << object.exe << '\n';
+    return os;
+  }
 };
 
 #endif
