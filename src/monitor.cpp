@@ -37,8 +37,6 @@ int LinuxAudit::init() {
 		return -3;
 	}
 
-	// Remove all previous rules
-
   return 0;
 }
 
