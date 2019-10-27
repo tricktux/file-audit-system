@@ -1,0 +1,10 @@
+
+@startuml
+
+class DirEvent
+class AuditEventBuilder
+class IDirEventBuilder
+
+IDirEventBuilder <|-- AuditEventBuilder
+
+@enduml
