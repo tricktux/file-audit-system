@@ -79,22 +79,13 @@ int main(int argc, char *argv[]) {
 
 static int event_loop(void) {
   Pipe p;
+	AuditDataPipeBuffer pb;
+
   if (p.init() != 0)
 		return -1;
 
-  void *data;
-  struct iovec vec[2];
-  struct audit_dispatcher_header hdr;
-  int iovcnt = sizeof(vec) / sizeof(struct iovec);
-
-  // allocate data structures
-  data = malloc(MAX_AUDIT_MESSAGE_LENGTH);
-  if (data == NULL) {
-    syslog(LOG_ERR, "Cannot allocate buffer");
-    return -2;
-  }
-  memset(data, 0, MAX_AUDIT_MESSAGE_LENGTH);
-  memset(&hdr, 0, sizeof(hdr));
+	if (pb.init() != 0)
+		return -2;
 
   do {
     int rc = p.data_ready(1);
@@ -103,23 +94,18 @@ static int event_loop(void) {
     if (rc == -1)
       break;
 
-    /* Get header first. it is fixed size */
-    vec[0].iov_base = (void *)&hdr;
-    vec[0].iov_len = sizeof(hdr);
-
-    // Next payload
-    vec[1].iov_base = data;
-    vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
-
-    if ((rc = p.read(&vec[0], iovcnt)) <= 0) {
+    if ((rc = p.read(pb.iov, pb.iovcnt)) <= 0) {
       syslog(LOG_ERR, "readv error: rc == %d(%s)", rc, strerror(errno));
       break;
     }
 
+		const audit_dispatcher_header &hdr = pb.get_header();
+		std::string raw_data = pb.get_data();
+
     // handle events here. Just for illustration, we print
     // to syslog, but you will want to do something else.
     syslog(LOG_INFO, "type=%d, payload size=%d", hdr.type, hdr.size);
-    syslog(LOG_INFO, "data=\"%.*s\"", hdr.size, (char *)data);
+    syslog(LOG_INFO, "data=\"%.*s\"", hdr.size, raw_data.c_str());
 
   } while (!SigHandler::signaled.load());
 

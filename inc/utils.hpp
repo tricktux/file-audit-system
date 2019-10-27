@@ -8,12 +8,12 @@
 #define UTILS_HPP
 
 #include <atomic>
+#include <libaudit.h>
 #include <signal.h>
 #include <sys/uio.h>
 #include <syslog.h>
 #include <thread>
 #include <unistd.h>
-#include <libaudit.h>
 
 class Pipe {
   int fd;
@@ -59,10 +59,11 @@ class AuditDataPipeBuffer {
 
 public:
   AuditDataPipeBuffer() : data(nullptr), iov(&vec[0]), iovcnt(-1) {}
-	~AuditDataPipeBuffer() {
-		if (data)
-			free(data);
-	}
+  ~AuditDataPipeBuffer() {
+    if (data)
+      free(data);
+  }
+
   int init() {
     data = malloc(MAX_AUDIT_MESSAGE_LENGTH);
     if (data == nullptr) {
@@ -83,6 +84,13 @@ public:
 
     return 0;
   }
+
+	const audit_dispatcher_header& get_header() const {
+		return hdr;
+	}
+	std::string get_data() const {
+		return std::string((char *) data);
+	}
 
   const struct iovec *iov;
   int iovcnt;
