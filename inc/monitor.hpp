@@ -155,7 +155,12 @@ class AuditEventBuilder {
 public:
   AuditEventBuilder(const std::string &key) : event(key) {}
   int add_audit_record(const AuditRecord &rec) {
-    auto &records = event.records;
+		auto &records = event.records;
+		if (records.empty()) {
+			records.push_back(rec);
+			return 0;
+		}
+
     const auto &record = event.records.front();
     if (record.serial_number != rec.serial_number) {
       // Signal that we have reached end of this event
