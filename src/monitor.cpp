@@ -122,7 +122,7 @@ void EventWorker::wait_for_event() {
       }
 
       int rc;
-			const auto &record = record_builder.build();
+			const AuditRecord &record = record_builder.build();
       if ((rc = event_builder.add_audit_record(record)) == 0) {
         // Record accepted. Continue to keep building event
         continue;
@@ -134,8 +134,9 @@ void EventWorker::wait_for_event() {
         continue;
       }
 
+			AuditEvent event = event_builder.build();
       if (ofs.is_open()) // Log this event
-        ofs << event_builder.build() << '\n';
+        ofs <<  event << '\n';
 			event_builder.clear(); // Clear this event since was logged
 			event_builder.add_audit_record(record); // Lets not loose this event
       buffer.pop();

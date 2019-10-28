@@ -105,8 +105,18 @@ public:
 struct AuditEvent {
   std::unordered_map<std::string, std::string> data;
   std::vector<AuditRecord> records;
-  // TODO add ostream
-  // - Use the serial number and timestamp of the very first record
+	friend std::ostream& operator<<(std::ostream& os, AuditEvent& obj) {
+		os
+			<< obj.records.front().timestamp << "["
+			<< obj.records.front().serial_number << "]: "
+			<< "pid=" << obj.data["pid"] << ' '
+			<< "uid=" << obj.data["uid"] << ' '
+			<< "name=" << obj.data["name"] << ' '
+			<< "nametype=" << obj.data["nametype"] << ' '
+			<< "comm=" << obj.data["comm"] << ' '
+			<< "key=: " << obj.data["pid"];
+		return os;
+	}
 
   AuditEvent(const std::string &key) {
     data["pid"] = "";
@@ -140,13 +150,13 @@ struct AuditEvent {
 };
 
 class AuditEventBuilder {
-  AuditEvent ae;
+  AuditEvent event;
 
 public:
-  AuditEventBuilder(const std::string &key) : ae(key) {}
+  AuditEventBuilder(const std::string &key) : event(key) {}
   int add_audit_record(const AuditRecord &rec) {
-    auto &records = ae.records;
-    const auto &record = ae.records.front();
+    auto &records = event.records;
+    const auto &record = event.records.front();
     if (record.serial_number != rec.serial_number) {
       // Signal that we have reached end of this event
       // and is ready for log
@@ -158,10 +168,10 @@ public:
     return 0;
   }
   AuditEvent build() {
-    ae.parse();
-    return ae;
+    event.parse();
+    return event;
   }
-  void clear() { ae.clear(); }
+  void clear() { event.clear(); }
 };
 
 class EventWorker {
