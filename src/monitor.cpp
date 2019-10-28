@@ -110,7 +110,7 @@ void EventWorker::wait_for_event() {
 
       AuditRecord ar = arb.build();
       if (ofs.is_open())
-        ofs << "[Threaded log]: " << ar << '\n';
+        ofs << "[Record]: " << ar << '\n';
       else
         syslog(LOG_ERR, "ofs stream not open");
       buffer.pop();

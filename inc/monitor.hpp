@@ -74,10 +74,11 @@ struct AuditRecord {
   std::string raw_data;
 
   friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
-    os << "type: " << obj.type << ','
-       << "serial_number: " << obj.serial_number << ','
-			 << "timestamp: " << obj.timestamp << ','
-       << "raw_data: " << obj.raw_data << '\n';
+		// Growth: Properly format timestamp
+    os << "timestamp:" << obj.timestamp << ", "
+			 << "type:" << obj.type << ", "
+			 << "serial_number:" << obj.serial_number << ", "
+       << "raw_data:" << obj.raw_data;
     return os;
   }
 };
@@ -103,12 +104,8 @@ struct AuditEvent {
   std::vector<AuditRecord> records;
 };
 
-class IDirEventBuilder {
-public:
-  virtual DirEvent build() = 0;
-};
-
-class AuditEventBuilder : public IDirEventBuilder {
+// TODO: Continue here
+class AuditEventBuilder {
   bool valid;
   std::string raw_data;
   bool validate();
@@ -118,8 +115,6 @@ public:
   explicit AuditEventBuilder(const std::string &data) : raw_data(data) {
     valid = validate();
   }
-
-  DirEvent build() override { return DirEvent(); }
 };
 
 class EventWorker {
