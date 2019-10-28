@@ -56,7 +56,7 @@ ENDIF()
 INCLUDE(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 
-# Build with c++17 support
+# Build with c++11 support
 IF(COMPILER_SUPPORTS_CXX11)
 	SET(CMAKE_CXX_STANDARD 11)
 ELSE()
