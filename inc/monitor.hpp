@@ -114,7 +114,7 @@ struct AuditEvent {
 			<< "name=" << obj.data["name"] << ' '
 			<< "nametype=" << obj.data["nametype"] << ' '
 			<< "comm=" << obj.data["comm"] << ' '
-			<< "key=: " << obj.data["pid"];
+			<< "key=: " << obj.data["key"];
 		return os;
 	}
 
@@ -132,6 +132,7 @@ struct AuditEvent {
     std::string buff;
     for (auto &d : data) {
       for (const auto &record : records) {
+				// syslog(LOG_NOTICE, "%s", record.raw_data.c_str());
         buff = AuditRecordBuilder::get_field_value(record.raw_data, d.first);
         if (buff.empty())
           continue;
@@ -144,7 +145,9 @@ struct AuditEvent {
   // Growth: Loop through all records to make sure the event key matches our key
   bool validate() { return true; }
   void clear() {
-    data.clear();
+		for (auto &d : data) {
+			d.second = "";
+		}
     records.clear();
   }
 };

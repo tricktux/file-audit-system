@@ -125,7 +125,7 @@ void EventWorker::wait_for_event() {
 			const AuditRecord &record = record_builder.build();
       if ((rc = event_builder.add_audit_record(record)) == 0) {
         // Record accepted. Continue to keep building event
-				syslog(LOG_NOTICE, "Record accepted. Continue to keep building event");
+				// syslog(LOG_NOTICE, "Record accepted. Continue to keep building event");
 				buffer.pop();
         continue;
       }
@@ -133,7 +133,7 @@ void EventWorker::wait_for_event() {
       if (rc < -1) {
         // If there was is different return code than new event
         // Skip this record
-				syslog(LOG_ERR, "Error adding record to event");
+				// syslog(LOG_ERR, "Error adding record to event");
 				buffer.pop();
         continue;
       }
@@ -141,7 +141,7 @@ void EventWorker::wait_for_event() {
 			AuditEvent event = event_builder.build();
       if (ofs.is_open()) // Log this event
         ofs <<  event << '\n';
-			syslog(LOG_NOTICE, "Event logged");
+			// syslog(LOG_NOTICE, "Event logged");
 			event_builder.clear(); // Clear this event since was logged
 			event_builder.add_audit_record(record); // Lets not loose this event
       buffer.pop();
