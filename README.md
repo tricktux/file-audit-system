@@ -33,3 +33,6 @@ File monitoring software that will log file access to configured directories on 
 
 - `sudo install.sh`
 
+## Todo
+
+- [ ] Is nametype truly the file access type?
