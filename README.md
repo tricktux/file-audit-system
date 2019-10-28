@@ -38,3 +38,4 @@ File monitoring software that will log file access to configured directories on 
 - [ ] Is nametype truly the file access type?
 - [ ] Add executable arguments to specify different config file
 - [ ] Not such a hardcoded config file location ("/etc/file-monitor.conf")
+- [ ] Make audit events logged configurable
