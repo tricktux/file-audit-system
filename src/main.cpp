@@ -46,7 +46,7 @@
 #include "config.hpp"
 
 // Local functions
-const char *CONFIG_LOC = "/etc/file-monitor.conf";
+const char *CONFIG_LOC = "/usr/local/etc/file-monitor.conf";
 struct ConfigOptions options;
 
 static int event_loop(void);
