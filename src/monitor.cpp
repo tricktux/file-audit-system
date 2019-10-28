@@ -58,9 +58,9 @@ int LinuxAudit::add_dir(const std::string &dir) {
     return -2;
   }
 
-  std::string key = "key=" + key;
-  if (audit_rule_fieldpair_data(&rule, key.c_str(), AUDIT_ALWAYS) != 0) {
-    syslog(LOG_ERR, "Failed to add key: '%s', to rule", key.c_str());
+  std::string k = "key=" + key;
+  if (audit_rule_fieldpair_data(&rule, k.c_str(), AUDIT_ALWAYS) != 0) {
+    syslog(LOG_ERR, "Failed to add key: '%s', to rule", k.c_str());
     return -3;
   }
 

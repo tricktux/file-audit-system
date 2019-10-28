@@ -27,10 +27,10 @@
  * gcc skeleton.c -o skeleton -laudit
  */
 
-#include <libaudit.h>
 #include <atomic>
 #include <errno.h>
 #include <fcntl.h>
+#include <libaudit.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdio.h>
@@ -41,9 +41,9 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#include "config.hpp"
 #include "monitor.hpp"
 #include "utils.hpp"
-#include "config.hpp"
 
 // Local functions
 const char *CONFIG_LOC = "/usr/local/etc/file-monitor.conf";
@@ -65,13 +65,13 @@ int main(int argc, char *argv[]) {
     return 4;
   }
 
-	load_config();
+  load_config();
 
   SigHandler::sig_register(SIGTERM);
   SigHandler::sig_register(SIGCHLD);
   SigHandler::sig_register(SIGHUP);
 
-	LinuxAudit la(options.opts["key"]);
+  LinuxAudit la(options.opts["key"]);
   if (la.init() < 0)
     return 5;
   if (la.add_dir(options.opts["dir"]) < 0)
@@ -101,7 +101,7 @@ static int event_loop(void) {
     if (rc == -1)
       break;
 
-		pb.reset_data();
+    pb.reset_data();
     if ((rc = p.read(pb.iov, pb.iovcnt)) <= 0) {
       syslog(LOG_ERR, "readv error: rc == %d(%s)", rc, strerror(errno));
       break;
@@ -116,16 +116,18 @@ static int event_loop(void) {
 }
 
 void load_config(void) {
-	IniConfig ic(CONFIG_LOC);
-	if (ic.load() != 0) {
-		syslog(LOG_ALERT, "Failed to load configuration file");
-		return;
-	}
+  IniConfig ic(CONFIG_LOC);
+  if (ic.load() != 0) {
+    syslog(LOG_ALERT, "Failed to load configuration file");
+    return;
+  }
 
-	std::string buff, opt_name;
-	for (const auto &opt : options.opts) {
-		opt_name = "Application:" + opt.first;
-		buff = ic.get_string(opt_name, opt.second);
-		options.opts[opt.first] = buff;
-	}
+  std::string buff, opt_name;
+  for (const auto &opt : options.opts) {
+    opt_name = "Application:" + opt.first;
+    buff = ic.get_string(opt_name, opt.second);
+    options.opts[opt.first] = buff;
+    syslog(LOG_NOTICE, "option (%s) = %s", opt.first.c_str(),
+           opt.second.c_str());
+  }
 }
