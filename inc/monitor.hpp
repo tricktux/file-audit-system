@@ -93,6 +93,10 @@ class EventWorker {
 
 public:
   EventWorker() : t(&EventWorker::wait_for_event, this) {}
+	~EventWorker() {
+		// Give thread time to clean up
+		t.join();
+	}
   void wait_for_event();
   void push(const std::string &data) {
     if (data.empty())

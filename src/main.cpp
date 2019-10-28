@@ -103,7 +103,6 @@ static int event_loop(void) {
     }
 
     const audit_dispatcher_header &hdr = pb.get_header();
-    // std::string raw_data = pb.get_data();
     std::string raw_data = std::string("type=") +
                            std::string(audit_msg_type_to_name(hdr.type)) +
                            std::string(", data=") + pb.get_data();
