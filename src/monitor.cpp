@@ -134,6 +134,8 @@ void EventWorker::wait_for_event() {
         // If there was is different return code than new event
         // Skip this record
 				// syslog(LOG_ERR, "Error adding record to event");
+				event_builder.clear(); // Clear this event since was logged
+				event_builder.add_audit_record(record); // Lets not loose this event
 				buffer.pop();
         continue;
       }

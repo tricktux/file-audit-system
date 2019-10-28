@@ -103,22 +103,20 @@ public:
 };
 
 struct AuditEvent {
+	std::string key;
   std::unordered_map<std::string, std::string> data;
   std::vector<AuditRecord> records;
-	friend std::ostream& operator<<(std::ostream& os, AuditEvent& obj) {
-		os
-			<< obj.records.front().timestamp << "["
-			<< obj.records.front().serial_number << "]: "
-			<< "pid=" << obj.data["pid"] << ' '
-			<< "uid=" << obj.data["uid"] << ' '
-			<< "name=" << obj.data["name"] << ' '
-			<< "nametype=" << obj.data["nametype"] << ' '
-			<< "comm=" << obj.data["comm"] << ' '
-			<< "key=: " << obj.data["key"];
-		return os;
-	}
+  friend std::ostream &operator<<(std::ostream &os, AuditEvent &obj) {
+    os << obj.records.front().timestamp << "["
+       << obj.records.front().serial_number << "]: "
+       << "pid=" << obj.data["pid"] << ' ' << "uid=" << obj.data["uid"] << ' '
+       << "name=" << obj.data["name"] << ' '
+       << "nametype=" << obj.data["nametype"] << ' '
+       << "comm=" << obj.data["comm"] << ' ' << "key=" << obj.data["key"];
+    return os;
+  }
 
-  AuditEvent(const std::string &key) {
+  AuditEvent(const std::string &_key) : key(_key) {
     data["pid"] = "";
     data["uid"] = "";
     data["name"] = "";
@@ -132,7 +130,7 @@ struct AuditEvent {
     std::string buff;
     for (auto &d : data) {
       for (const auto &record : records) {
-				// syslog(LOG_NOTICE, "%s", record.raw_data.c_str());
+        // syslog(LOG_NOTICE, "%s", record.raw_data.c_str());
         buff = AuditRecordBuilder::get_field_value(record.raw_data, d.first);
         if (buff.empty())
           continue;
@@ -142,12 +140,29 @@ struct AuditEvent {
     }
   }
 
-  // Growth: Loop through all records to make sure the event key matches our key
-  bool validate() { return true; }
+  bool valid() {
+    std::string buff = "";
+    for (const auto &record : records) {
+      buff = AuditRecordBuilder::get_field_value(record.raw_data, "key");
+      if (!buff.empty())
+        break;
+    }
+
+		/// Remove quotes!
+		std::string::size_type quote;
+		while ((quote = buff.find_first_of('"')) != std::string::npos)
+			buff.erase(quote, 1);
+
+    if ((!buff.empty()) && (data["key"] == buff))
+      return true;
+
+    return false;
+  }
   void clear() {
-		for (auto &d : data) {
-			d.second = "";
-		}
+    for (auto &d : data) {
+      d.second = "";
+    }
+		data["key"] = key;
     records.clear();
   }
 };
@@ -158,17 +173,19 @@ class AuditEventBuilder {
 public:
   AuditEventBuilder(const std::string &key) : event(key) {}
   int add_audit_record(const AuditRecord &rec) {
-		auto &records = event.records;
-		if (records.empty()) {
-			records.push_back(rec);
-			return 0;
-		}
+    auto &records = event.records;
+    if (records.empty()) {
+      records.push_back(rec);
+      return 0;
+    }
 
     const auto &record = event.records.front();
     if (record.serial_number != rec.serial_number) {
       // Signal that we have reached end of this event
-      // and is ready for log
-      return -1;
+      // and is ready for log if it is valid
+      if (event.valid()) // Meaning has a proper key
+        return -1;
+      return -2;
     }
 
     // Otherwise just save another record for this event
