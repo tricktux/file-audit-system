@@ -11,6 +11,14 @@ cmake_minimum_required(VERSION 3.1)
 # Set ProjectName
 project(file-system-audit)
 
+# Download dependencies
+file(GLOB EXTERNAL_SUBDIR
+	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/external/*.cmake")
+
+foreach (DEPS ${EXTERNAL_SUBDIR})
+	include(${DEPS})
+endforeach ()
+
 # Set a default build type if none was specified
 set(default_build_type "Release")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
@@ -88,4 +96,8 @@ if(ENABLE_TESTS)
 	add_subdirectory("tests")
 endif()
 
+include (GNUInstallDirs)
 install (TARGETS file-monitor)
+install (FILES ${CMAKE_SOURCE_DIR}/config/file-monitor.conf
+					DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+	)
