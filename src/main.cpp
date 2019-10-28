@@ -43,9 +43,14 @@
 
 #include "monitor.hpp"
 #include "utils.hpp"
+#include "config.hpp"
 
 // Local functions
+const char *CONFIG_LOC = "/etc/file-monitor.conf";
+struct ConfigOptions options;
+
 static int event_loop(void);
+static void load_config(void);
 
 std::atomic<bool> SigHandler::signaled{false};
 
@@ -54,13 +59,13 @@ int main(int argc, char *argv[]) {
   openlog(argv[0], LOG_PID, LOG_DAEMON);
   syslog(LOG_NOTICE, "Starting %s with %d args...", argv[0], argc);
 
-#ifndef DEBUG
   // Make sure we are root
   if (getuid() != 0) {
     syslog(LOG_ERR, "You must be root to run this program.");
     return 4;
   }
-#endif
+
+	load_config();
 
   SigHandler::sig_register(SIGTERM);
   SigHandler::sig_register(SIGCHLD);
@@ -69,7 +74,7 @@ int main(int argc, char *argv[]) {
   LinuxAudit la;
   if (la.init() < 0)
     return 5;
-  if (la.add_dir("/etc") < 0)
+  if (la.add_dir(options.opts["dir"]) < 0)
     return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");
@@ -108,4 +113,18 @@ static int event_loop(void) {
   } while (!SigHandler::signaled.load());
 
   return 0;
+}
+
+void load_config(void) {
+	IniConfig ic(CONFIG_LOC);
+	if (ic.load() != 0) {
+		syslog(LOG_ALERT, "Failed to load configuration file");
+		return;
+	}
+
+	std::string buff;
+	for (const auto &opt : options.opts) {
+		buff = ic.get_string(opt.first, opt.second);
+		options.opts[opt.first] = buff;
+	}
 }
