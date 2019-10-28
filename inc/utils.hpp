@@ -92,7 +92,12 @@ public:
 
 	}
   const audit_dispatcher_header &get_header() const { return hdr; }
-  std::string get_data() const { return std::string((char *)data); }
+  std::string get_data() const {
+		char *pch = (char *) data;
+		if ((!pch) || (pch[0] == '\0'))
+			return std::string();
+		return std::string(pch);
+	}
 
   const struct iovec *iov;
   int iovcnt;
