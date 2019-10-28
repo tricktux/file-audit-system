@@ -11,6 +11,7 @@
 #include <libaudit.h>
 #include <locale.h>
 #include <signal.h>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,9 +103,35 @@ void EventWorker::wait_for_event() {
   }
 }
 
+std::string AuditRecordBuilder::get_field_value(const std::string &raw_data,
+                                                const std::string &field_name) {
+	if ((raw_data.empty()) || (field_name.empty()))
+		return std::string();
+
+	std::string::size_type start, end;
+	if ((start = raw_data.find(field_name)) == std::string::npos)
+		return std::string();
+
+	start += field_name.length() + 2; // Point to =
+	if ((end = raw_data.find_first_of(start, ' ')) == std::string::npos)
+		return std::string();
+
+	return raw_data.substr(start, end);
+}
+
 int AuditRecordBuilder::set_type() {
   if (data.empty())
     return -1;
+
+  std::string::size_type start, end;
+  if ((start = data.find("type")) == std::string::npos)
+    return -2;
+
+  start += 5; // Point to =
+  if ((end = data.find_first_of(start, ' ')) == std::string::npos)
+    return -3;
+
+  au.type = data.substr(start, end);
 
   return 0;
 }

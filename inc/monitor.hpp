@@ -68,26 +68,30 @@ public:
 };
 
 struct AuditRecord {
-	std::string type;
-	double timestamp;
-	long serial_number;
-	std::string raw_data;;
+  std::string type;
+  double timestamp;
+  long serial_number;
+  std::string raw_data;
+  ;
 };
 
 class AuditRecordBuilder {
-	std::string data;
-	AuditRecord au;
-public:
-	AuditRecordBuilder(const std::string raw_data) : data(raw_data) {
-		au.raw_data = raw_data;
-	}
+  std::string data;
+  AuditRecord au;
+  static std::string get_field_value(const std::string &raw_data,
+                              const std::string &field_name);
 
-	int set_type();
+public:
+  AuditRecordBuilder(const std::string raw_data) : data(raw_data) {
+    au.raw_data = raw_data;
+  }
+
+  int set_type();
 };
 
 struct AuditEvent {
-	std::string key;
-	std::vector<AuditRecord> records;
+  std::string key;
+  std::vector<AuditRecord> records;
 };
 
 class IDirEventBuilder {
@@ -117,10 +121,10 @@ class EventWorker {
 
 public:
   EventWorker() : t(&EventWorker::wait_for_event, this) {}
-	~EventWorker() {
-		// Give thread time to clean up
-		t.join();
-	}
+  ~EventWorker() {
+    // Give thread time to clean up
+    t.join();
+  }
   void wait_for_event();
   void push(const std::string &data) {
     if (data.empty())
