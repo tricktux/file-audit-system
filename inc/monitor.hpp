@@ -77,8 +77,7 @@ struct AuditRecord {
   std::string raw_data;
 
   friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
-    os << "timestamp:" << obj.timestamp << ", "
-       << "serial_number:" << obj.serial_number << ", "
+    os <<  obj.timestamp << "[" << obj.serial_number << "]: "
        << "type:" << obj.type << ", "
        << "raw_data:" << obj.raw_data;
     return os;
