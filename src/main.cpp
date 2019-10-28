@@ -122,9 +122,10 @@ void load_config(void) {
 		return;
 	}
 
-	std::string buff;
+	std::string buff, opt_name;
 	for (const auto &opt : options.opts) {
-		buff = ic.get_string(opt.first, opt.second);
+		opt_name = "Application:" + opt.first;
+		buff = ic.get_string(opt_name, opt.second);
 		options.opts[opt.first] = buff;
 	}
 }
