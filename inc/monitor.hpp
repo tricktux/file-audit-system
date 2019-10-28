@@ -72,7 +72,6 @@ struct AuditRecord {
   double timestamp;
   long serial_number;
   std::string raw_data;
-  ;
 };
 
 class AuditRecordBuilder {
@@ -87,6 +86,7 @@ public:
   }
 
   int set_type();
+	int set_timestamp_and_serial_number();
 };
 
 struct AuditEvent {
