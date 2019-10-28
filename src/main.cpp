@@ -93,7 +93,7 @@ static int event_loop(void) {
   if (pb.init() != 0)
     return -2;
 
-  EventWorker ew;
+  EventWorker ew(options.opts["log"]);
   do {
     int rc = p.data_ready(1);
     if (rc == 0)

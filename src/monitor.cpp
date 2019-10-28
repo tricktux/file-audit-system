@@ -79,7 +79,12 @@ int LinuxAudit::add_dir(const std::string &dir) {
 /// Check every 10 ms if we have a signal to exit
 void EventWorker::wait_for_event() {
   std::chrono::milliseconds timeout(10);
-  std::ofstream ofs("/tmp/file-monitor");
+  std::ofstream ofs(log_file_name);
+	if (!ofs.is_open()) { // Disaster!!!
+		syslog(LOG_EMERG, "Failed to open log file. Panicking!!!");
+		SigHandler::signaled.store(true);
+		return;
+	}
   std::queue<std::string> buffer;
   while (!SigHandler::signaled.load()) {
     std::string buff;
@@ -118,8 +123,6 @@ void EventWorker::wait_for_event() {
       AuditRecord ar = arb.build();
       if (ofs.is_open())
         ofs << "[Record]: " << ar << '\n';
-      else
-        syslog(LOG_ERR, "ofs stream not open");
       buffer.pop();
     }
   }

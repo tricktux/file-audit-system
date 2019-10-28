@@ -26,13 +26,13 @@ public:
 class LinuxAudit : public IDirMonitor {
   int fd;
   struct audit_rule_data *rule;
-	std::string key;
+  std::string key;
 
   int add_key();
 
 public:
-	LinuxAudit() : fd(-1), rule(0), key("file-monitor") {}
-  LinuxAudit(const std::string _key) : fd(-1), rule(0), key(_key) {}
+  LinuxAudit() : fd(-1), rule(0), key("file-monitor") {}
+  LinuxAudit(const std::string &_key) : fd(-1), rule(0), key(_key) {}
   ~LinuxAudit() {
     // Delete created rule
     if ((fd >= 0) && (rule != 0))
@@ -79,7 +79,7 @@ struct AuditRecord {
   friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
     os << "timestamp:" << obj.timestamp << ", "
        << "serial_number:" << obj.serial_number << ", "
-			 << "type:" << obj.type << ", "
+       << "type:" << obj.type << ", "
        << "raw_data:" << obj.raw_data;
     return os;
   }
@@ -125,9 +125,12 @@ class EventWorker {
   std::condition_variable cv;
   std::queue<std::string> q;
   std::thread t;
+  std::string log_file_name;
 
 public:
-  EventWorker() : t(&EventWorker::wait_for_event, this) {}
+  EventWorker() : log_file_name("/tmp/file-monitor.log") {}
+  EventWorker(const std::string &log)
+      : t(&EventWorker::wait_for_event, this), log_file_name(log) {}
   ~EventWorker() {
     // Give thread time to clean up
     t.join();
