@@ -78,26 +78,33 @@ int LinuxAudit::add_dir(const std::string &dir) {
 void EventWorker::wait_for_event() {
   std::chrono::milliseconds timeout(10);
   std::ofstream ofs("/tmp/file-monitor");
-	std::queue<std::string> buffer;
+  std::queue<std::string> buffer;
   while (!SigHandler::signaled.load()) {
     std::string buff;
     {
       std::unique_lock<std::mutex> lk(qm);
       if (!cv.wait_for(lk, timeout, [this] { return !q.empty(); }))
         continue;
-			std::swap(q, buffer);
+      std::swap(q, buffer);
     }
 
-		while (!buffer.empty()) {
-			if (buffer.front().empty()) {
-				buffer.pop();
-				continue;
-			}
-			if (ofs.is_open())
-				ofs << "[Threaded log]: " << buffer.front() << '\n';
-			else
-				syslog(LOG_ERR, "ofs stream not open");
-			buffer.pop();
-		}
+    while (!buffer.empty()) {
+      if (buffer.front().empty()) {
+        buffer.pop();
+        continue;
+      }
+      if (ofs.is_open())
+        ofs << "[Threaded log]: " << buffer.front() << '\n';
+      else
+        syslog(LOG_ERR, "ofs stream not open");
+      buffer.pop();
+    }
   }
+}
+
+int AuditRecordBuilder::set_type() {
+  if (data.empty())
+    return -1;
+
+  return 0;
 }

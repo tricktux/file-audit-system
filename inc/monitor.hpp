@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <vector>
 
 class IDirMonitor {
 public:
@@ -64,6 +65,29 @@ public:
        << "exe: " << object.exe << '\n';
     return os;
   }
+};
+
+struct AuditRecord {
+	std::string type;
+	double timestamp;
+	long serial_number;
+	std::string raw_data;;
+};
+
+class AuditRecordBuilder {
+	std::string data;
+	AuditRecord au;
+public:
+	AuditRecordBuilder(const std::string raw_data) : data(raw_data) {
+		au.raw_data = raw_data;
+	}
+
+	int set_type();
+};
+
+struct AuditEvent {
+	std::string key;
+	std::vector<AuditRecord> records;
 };
 
 class IDirEventBuilder {
