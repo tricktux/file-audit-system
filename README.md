@@ -33,6 +33,13 @@ File monitoring software that will log file access to configured directories on 
 
 - `sudo install.sh`
 
+## See it in action:
+
+- `tail -f /tmp/file-monitor.log`
+	- Change above for different logs
+- `journalctl -fu auditd`
+	- Watch here for any relevant app logs
+
 ## Todo
 
 - [ ] Is nametype truly the file access type?
