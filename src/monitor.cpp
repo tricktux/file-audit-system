@@ -94,8 +94,23 @@ void EventWorker::wait_for_event() {
         buffer.pop();
         continue;
       }
+
+      AuditRecordBuilder arb(buffer.front());
+      if (arb.set_type() < 0) {
+        syslog(LOG_NOTICE, "Failed to build record type");
+        buffer.pop();
+        continue;
+      }
+
+			if  (arb.set_timestamp_and_serial_number() < 0) {
+				syslog(LOG_NOTICE, "Failed to build record timestamp/serial_number");
+				buffer.pop();
+				continue;
+			}
+
+      AuditRecord ar = arb.build();
       if (ofs.is_open())
-        ofs << "[Threaded log]: " << buffer.front() << '\n';
+        ofs << "[Threaded log]: " << ar << '\n';
       else
         syslog(LOG_ERR, "ofs stream not open");
       buffer.pop();
@@ -109,14 +124,20 @@ std::string AuditRecordBuilder::get_field_value(const std::string &raw_data,
     return std::string();
 
   std::string::size_type start, end;
-  if ((start = raw_data.find(field_name)) == std::string::npos)
+  if ((start = raw_data.find(field_name)) == std::string::npos) {
+		syslog(LOG_WARNING, "Failed to find field name");
     return std::string();
+	}
 
-  start += field_name.length() + 2; // Point to =
-  if ((end = raw_data.find_first_of(start, ' ')) == std::string::npos)
+  start += field_name.length() + 1; // Point to =
+  if ((end = raw_data.find(" ")) == std::string::npos) {
+		syslog(LOG_WARNING, "Failed to find following space");
     return std::string();
+	}
 
-  return raw_data.substr(start, end);
+	std::string rc = raw_data.substr(start, end);
+	syslog(LOG_NOTICE, "rc(%s) = %s", field_name.c_str(), rc.c_str());
+  return rc;
 }
 
 int AuditRecordBuilder::set_type() {
@@ -147,14 +168,14 @@ int AuditRecordBuilder::set_timestamp_and_serial_number() {
   std::string::size_type paren, end;
   if ((paren = buff.find_first_of('(')) == std::string::npos)
     return -3;
-	if ((end = buff.find_first_of(paren, ':')) == std::string::npos)
-		return -4;
-	// std::string raw = buff.substr(paren+1, end);
-	au.timestamp = std::stod(buff.substr(paren+1, end));
-	paren = end+1;
-	if ((end = buff.find_first_of(paren, ')')) == std::string::npos)
-		return -5;
-	au.serial_number = std::stol(buff.substr(paren, end));
+  if ((end = buff.find_first_of(paren, ':')) == std::string::npos)
+    return -4;
+  // std::string raw = buff.substr(paren+1, end);
+  au.timestamp = std::stod(buff.substr(paren + 1, end));
+  paren = end + 1;
+  if ((end = buff.find_first_of(paren, ')')) == std::string::npos)
+    return -5;
+  au.serial_number = std::stol(buff.substr(paren, end));
 
   return 0;
 }

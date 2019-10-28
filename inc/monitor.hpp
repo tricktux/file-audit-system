@@ -72,13 +72,21 @@ struct AuditRecord {
   double timestamp;
   long serial_number;
   std::string raw_data;
+
+  friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
+    os << "type: " << obj.type << '\n'
+       << "serial_number: " << obj.serial_number << '\n'
+			 << "timestamp: " << obj.timestamp << '\n'
+       << "raw_data: " << obj.raw_data << '\n';
+    return os;
+  }
 };
 
 class AuditRecordBuilder {
   std::string data;
   AuditRecord au;
   static std::string get_field_value(const std::string &raw_data,
-                              const std::string &field_name);
+                                     const std::string &field_name);
 
 public:
   AuditRecordBuilder(const std::string raw_data) : data(raw_data) {
@@ -86,7 +94,8 @@ public:
   }
 
   int set_type();
-	int set_timestamp_and_serial_number();
+  int set_timestamp_and_serial_number();
+  AuditRecord build() { return au; }
 };
 
 struct AuditEvent {
