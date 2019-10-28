@@ -5,9 +5,11 @@
 /// @date Oct 26 2019
 
 #include <chrono>
+#include <ctime>
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
+#include <iomanip>
 #include <libaudit.h>
 #include <locale.h>
 #include <signal.h>
@@ -24,6 +26,7 @@
 #include "utils.hpp"
 
 const std::string LinuxAudit::FILTER_KEY = "file-monitor";
+const std::string AuditRecord::TIME_FORMAT = "%c %Z";
 
 int LinuxAudit::init() {
   rule = reinterpret_cast<audit_rule_data *>(malloc(sizeof(audit_rule_data)));
@@ -102,11 +105,17 @@ void EventWorker::wait_for_event() {
         continue;
       }
 
-      if (arb.set_timestamp_and_serial_number() < 0) {
-        syslog(LOG_NOTICE, "Failed to build record timestamp/serial_number");
+      if (arb.set_timestamp() < 0) {
+        syslog(LOG_NOTICE, "Failed to build record timestamp");
         buffer.pop();
         continue;
       }
+
+			if (arb.set_serial_number() < 0) {
+				syslog(LOG_NOTICE, "Failed to build record serial_number");
+				buffer.pop();
+				continue;
+			}
 
       AuditRecord ar = arb.build();
       if (ofs.is_open())
@@ -158,7 +167,7 @@ int AuditRecordBuilder::set_type() {
 // ppid=561218 pid=561219 auid=1000 uid=1000 gid=985 euid=1000 suid=1000
 // fsuid=1000 egid=985 sgid=985 fsgid=985 tty=(none) ses=1 comm="pacman"
 // exe="/usr/bin/pacman" key="file-monitor"
-int AuditRecordBuilder::set_timestamp_and_serial_number() {
+int AuditRecordBuilder::set_timestamp() {
   if (data.empty())
     return -1;
 
@@ -167,13 +176,35 @@ int AuditRecordBuilder::set_timestamp_and_serial_number() {
     return -2;
   std::string::size_type paren, end;
   if ((paren = buff.find_first_of('(')) == std::string::npos) {
-		// syslog(LOG_NOTICE, "Failed to find data first paren");
-		return -3;
-	}
+    // syslog(LOG_NOTICE, "Failed to find data first paren");
+    return -3;
+  }
   if ((end = buff.find_first_of(':')) == std::string::npos) {
-		// syslog(LOG_NOTICE, "Failed to find data colon");
-		return -3;
-	}
+    // syslog(LOG_NOTICE, "Failed to find data colon");
+    return -3;
+  }
+  double raw_timestamp = std::stod(buff.substr(paren + 1, end));
+  au.timestamp = (std::time_t)raw_timestamp;
+  // au.timestamp = std::put_time(std::localtime(&t), TIME_FORMAT.c_str());
+
+  return 0;
+}
+int AuditRecordBuilder::set_serial_number() {
+  if (data.empty())
+    return -1;
+
+  std::string buff = get_field_value(data, "data");
+  if (buff.empty())
+    return -2;
+  std::string::size_type paren, end;
+  if ((paren = buff.find_first_of('(')) == std::string::npos) {
+    // syslog(LOG_NOTICE, "Failed to find data first paren");
+    return -3;
+  }
+  if ((end = buff.find_first_of(':')) == std::string::npos) {
+    // syslog(LOG_NOTICE, "Failed to find data colon");
+    return -3;
+  }
   // std::string raw = buff.substr(paren+1, end);
   au.timestamp = std::stod(buff.substr(paren + 1, end));
   paren = end + 1;

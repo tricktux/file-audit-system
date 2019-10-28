@@ -68,19 +68,21 @@ public:
 };
 
 struct AuditRecord {
-  std::string type;
-  double timestamp;
-  long serial_number;
-  std::string raw_data;
+	static const std::string TIME_FORMAT;
+	std::string type;
+	std::time_t timestamp;
+	long serial_number;
+	std::string raw_data;
 
-  friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
-		// Growth: Properly format timestamp
-    os << "timestamp:" << obj.timestamp << ", "
-			 << "type:" << obj.type << ", "
-			 << "serial_number:" << obj.serial_number << ", "
-       << "raw_data:" << obj.raw_data;
-    return os;
-  }
+	friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
+		os << "timestamp:"
+			<< std::put_time(std::localtime(&obj.timestamp), TIME_FORMAT.c_str())
+			<< ", "
+			<< "type:" << obj.type << ", "
+			<< "serial_number:" << obj.serial_number << ", "
+			<< "raw_data:" << obj.raw_data;
+		return os;
+	}
 };
 
 class AuditRecordBuilder {
@@ -95,7 +97,8 @@ public:
   }
 
   int set_type();
-  int set_timestamp_and_serial_number();
+  int set_serial_number();
+  int set_timestamp();
   AuditRecord build() { return au; }
 };
 
