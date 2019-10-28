@@ -15,6 +15,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 class IDirMonitor {
@@ -77,7 +78,7 @@ struct AuditRecord {
   std::string raw_data;
 
   friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
-    os <<  obj.timestamp << "[" << obj.serial_number << "]: "
+    os << obj.timestamp << "[" << obj.serial_number << "]: "
        << "type:" << obj.type << ", "
        << "raw_data:" << obj.raw_data;
     return os;
@@ -102,21 +103,46 @@ public:
 };
 
 struct AuditEvent {
-  std::string key;
+  std::unordered_map<std::string, std::string> data;
   std::vector<AuditRecord> records;
+  // TODO add ostream
+
+  AuditEvent() {
+    data["pid"] = "";
+    data["uid"] = "";
+    data["name"] = "";
+    data["nametype"] = "";
+    data["comm"] = "";
+    data["key"] = "";
+  }
+
+	/// Search all records for key
+	bool validate() { return true; }
+  void clear() {
+    data.clear();
+    records.clear();
+  }
 };
 
-// TODO: Continue here
 class AuditEventBuilder {
-  bool valid;
-  std::string raw_data;
-  bool validate();
+  AuditEvent ae;
 
 public:
-  AuditEventBuilder() : valid(false), raw_data(std::string()) {}
-  explicit AuditEventBuilder(const std::string &data) : raw_data(data) {
-    valid = validate();
+  int add_audit_record(const AuditRecord ar) {
+    auto &records = ae.records;
+    const auto &record = ae.records.front();
+    if (record.serial_number != ar.serial_number) {
+      // Signal that we have reached end of this event
+      // and is ready for log
+      return -1;
+    }
+
+    // Otherwise just save another record for this event
+    records.push_back(ar);
+    return 0;
   }
+  AuditEvent build() { return ae; }
+  void clear() { ae.clear(); }
 };
 
 class EventWorker {
