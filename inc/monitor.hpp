@@ -88,8 +88,6 @@ struct AuditRecord {
 class AuditRecordBuilder {
   std::string data;
   AuditRecord au;
-  static std::string get_field_value(const std::string &raw_data,
-                                     const std::string &field_name);
 
 public:
   AuditRecordBuilder(const std::string raw_data) : data(raw_data) {
@@ -100,24 +98,41 @@ public:
   int set_serial_number();
   int set_timestamp();
   AuditRecord build() { return au; }
+  static std::string get_field_value(const std::string &raw_data,
+                                     const std::string &field_name);
 };
 
 struct AuditEvent {
   std::unordered_map<std::string, std::string> data;
   std::vector<AuditRecord> records;
   // TODO add ostream
+  // - Use the serial number and timestamp of the very first record
 
-  AuditEvent() {
+  AuditEvent(const std::string &key) {
     data["pid"] = "";
     data["uid"] = "";
     data["name"] = "";
     data["nametype"] = "";
     data["comm"] = "";
-    data["key"] = "";
+    data["key"] = key;
   }
 
-	/// Search all records for key
-	bool validate() { return true; }
+  /// Loop through each individual record's raw data, looking for the key word
+  void parse() {
+    std::string buff;
+    for (auto &d : data) {
+      for (const auto &record : records) {
+        buff = AuditRecordBuilder::get_field_value(record.raw_data, d.first);
+        if (buff.empty())
+          continue;
+        d.second = buff;
+        break;
+      }
+    }
+  }
+
+  // Growth: Loop through all records to make sure the event key matches our key
+  bool validate() { return true; }
   void clear() {
     data.clear();
     records.clear();
@@ -128,20 +143,24 @@ class AuditEventBuilder {
   AuditEvent ae;
 
 public:
-  int add_audit_record(const AuditRecord ar) {
+  AuditEventBuilder(const std::string &key) : ae(key) {}
+  int add_audit_record(const AuditRecord &rec) {
     auto &records = ae.records;
     const auto &record = ae.records.front();
-    if (record.serial_number != ar.serial_number) {
+    if (record.serial_number != rec.serial_number) {
       // Signal that we have reached end of this event
       // and is ready for log
       return -1;
     }
 
     // Otherwise just save another record for this event
-    records.push_back(ar);
+    records.push_back(rec);
     return 0;
   }
-  AuditEvent build() { return ae; }
+  AuditEvent build() {
+    ae.parse();
+    return ae;
+  }
   void clear() { ae.clear(); }
 };
 
@@ -151,11 +170,12 @@ class EventWorker {
   std::queue<std::string> q;
   std::thread t;
   std::string log_file_name;
+  std::string key;
 
 public:
-  EventWorker() : log_file_name("/tmp/file-monitor.log") {}
-  EventWorker(const std::string &log)
-      : t(&EventWorker::wait_for_event, this), log_file_name(log) {}
+  EventWorker() : log_file_name("/tmp/file-monitor.log"), key("file-monitor") {}
+  EventWorker(const std::string &log, const std::string &_key)
+      : t(&EventWorker::wait_for_event, this), log_file_name(log), key(_key) {}
   ~EventWorker() {
     // Give thread time to clean up
     t.join();

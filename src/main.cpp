@@ -93,7 +93,7 @@ static int event_loop(void) {
   if (pb.init() != 0)
     return -2;
 
-  EventWorker ew(options.opts["log"]);
+	EventWorker ew(options.opts["log"], options.opts["key"]);
   do {
     int rc = p.data_ready(1);
     if (rc == 0)
@@ -123,10 +123,10 @@ void load_config(void) {
   }
 
   std::string buff, opt_name;
-  for (const auto &opt : options.opts) {
+  for (auto &opt : options.opts) {
     opt_name = "Application:" + opt.first;
     buff = ic.get_string(opt_name, opt.second);
-    options.opts[opt.first] = buff;
+		opt.second = buff;
     syslog(LOG_NOTICE, "option (%s) = %s", opt.first.c_str(),
            opt.second.c_str());
   }

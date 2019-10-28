@@ -80,12 +80,13 @@ int LinuxAudit::add_dir(const std::string &dir) {
 void EventWorker::wait_for_event() {
   std::chrono::milliseconds timeout(10);
   std::ofstream ofs(log_file_name);
-	if (!ofs.is_open()) { // Disaster!!!
-		syslog(LOG_EMERG, "Failed to open log file. Panicking!!!");
-		SigHandler::signaled.store(true);
-		return;
-	}
+  if (!ofs.is_open()) { // Disaster!!!
+    syslog(LOG_EMERG, "Failed to open log file. Panicking!!!");
+    SigHandler::signaled.store(true);
+    return;
+  }
   std::queue<std::string> buffer;
+  AuditEventBuilder event_builder(key);
   while (!SigHandler::signaled.load()) {
     std::string buff;
     {
@@ -101,28 +102,42 @@ void EventWorker::wait_for_event() {
         continue;
       }
 
-      AuditRecordBuilder arb(buffer.front());
-      if (arb.set_type() < 0) {
+      AuditRecordBuilder record_builder(buffer.front());
+      if (record_builder.set_type() < 0) {
         syslog(LOG_NOTICE, "Failed to build record type");
         buffer.pop();
         continue;
       }
 
-      if (arb.set_timestamp() < 0) {
+      if (record_builder.set_timestamp() < 0) {
         syslog(LOG_NOTICE, "Failed to build record timestamp");
         buffer.pop();
         continue;
       }
 
-      if (arb.set_serial_number() < 0) {
+      if (record_builder.set_serial_number() < 0) {
         syslog(LOG_NOTICE, "Failed to build record serial_number");
         buffer.pop();
         continue;
       }
 
-      AuditRecord ar = arb.build();
-      if (ofs.is_open())
-        ofs << ar << '\n';
+      int rc;
+			const auto &record = record_builder.build();
+      if ((rc = event_builder.add_audit_record(record)) == 0) {
+        // Record accepted. Continue to keep building event
+        continue;
+      }
+      // This is a different record. Lets wrap current event
+      if (rc < -1) {
+        // If there was is different return code than new event
+        // Skip this record
+        continue;
+      }
+
+      if (ofs.is_open()) // Log this event
+        ofs << event_builder.build() << '\n';
+			event_builder.clear(); // Clear this event since was logged
+			event_builder.add_audit_record(record); // Lets not loose this event
       buffer.pop();
     }
   }
