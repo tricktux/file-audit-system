@@ -122,7 +122,7 @@ void EventWorker::wait_for_event() {
 
       AuditRecord ar = arb.build();
       if (ofs.is_open())
-        ofs << "[Record]: " << ar << '\n';
+        ofs << ar << '\n';
       buffer.pop();
     }
   }
