@@ -24,7 +24,6 @@
 #include "monitor.hpp"
 #include "utils.hpp"
 
-const std::string LinuxAudit::FILTER_KEY = "file-monitor";
 const std::string AuditRecord::TIME_FORMAT = "%c %Z";
 
 int LinuxAudit::init() {
@@ -59,7 +58,7 @@ int LinuxAudit::add_dir(const std::string &dir) {
     return -2;
   }
 
-  std::string key = "key=" + FILTER_KEY;
+  std::string key = "key=" + key;
   if (audit_rule_fieldpair_data(&rule, key.c_str(), AUDIT_ALWAYS) != 0) {
     syslog(LOG_ERR, "Failed to add key: '%s', to rule", key.c_str());
     return -3;

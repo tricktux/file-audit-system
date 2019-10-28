@@ -26,12 +26,13 @@ public:
 class LinuxAudit : public IDirMonitor {
   int fd;
   struct audit_rule_data *rule;
+	std::string key;
 
   int add_key();
 
 public:
-  static const std::string FILTER_KEY;
-  LinuxAudit() : fd(-1), rule(0) {}
+	LinuxAudit() : fd(-1), rule(0), key("file-monitor") {}
+  LinuxAudit(const std::string _key) : fd(-1), rule(0), key(_key) {}
   ~LinuxAudit() {
     // Delete created rule
     if ((fd >= 0) && (rule != 0))

@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   SigHandler::sig_register(SIGCHLD);
   SigHandler::sig_register(SIGHUP);
 
-  LinuxAudit la;
+	LinuxAudit la(options.opts["key"]);
   if (la.init() < 0)
     return 5;
   if (la.add_dir(options.opts["dir"]) < 0)
