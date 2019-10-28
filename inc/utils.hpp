@@ -74,30 +74,44 @@ public:
       return -1;
     }
 
-		reset_data();
+    reset_data();
     return 0;
   }
 
-	void reset_data() {
-		memset(data, 0, MAX_AUDIT_MESSAGE_LENGTH);
-		memset(&hdr, 0, sizeof(hdr));
+  void reset_data() {
+    memset(data, 0, MAX_AUDIT_MESSAGE_LENGTH);
+    memset(&hdr, 0, sizeof(hdr));
 
-		/* Get header first. it is fixed size */
-		vec[0].iov_base = (void *)&hdr;
-		vec[0].iov_len = sizeof(hdr);
+    /* Get header first. it is fixed size */
+    vec[0].iov_base = (void *)&hdr;
+    vec[0].iov_len = sizeof(hdr);
 
-		// Next payload
-		vec[1].iov_base = data;
-		vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
-
-	}
+    // Next payload
+    vec[1].iov_base = data;
+    vec[1].iov_len = MAX_AUDIT_MESSAGE_LENGTH;
+  }
   const audit_dispatcher_header &get_header() const { return hdr; }
   std::string get_data() const {
-		char *pch = (char *) data;
-		if ((!pch) || (pch[0] == '\0'))
-			return std::string();
-		return std::string(pch);
-	}
+    char *pch = (char *)data;
+    if ((!pch) || (pch[0] == '\0'))
+      return std::string();
+    return std::string(pch);
+  }
+
+  /// Sanitize payload
+  std::string form_payload() {
+    std::string rc = "";
+    const char *ptype = audit_msg_type_to_name(hdr.type);
+    char *ppayload = (char *)data;
+    if ((ptype) && (ptype[0] != '\0')) {
+      rc = "type=" + std::string(ptype) + " ";
+    }
+    if ((ppayload) && (ppayload[0] != '\0')) {
+      rc += "data=" + std::string(ppayload);
+    }
+
+    return rc;
+  }
 
   const struct iovec *iov;
   int iovcnt;
