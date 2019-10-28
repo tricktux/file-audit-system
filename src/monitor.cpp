@@ -102,11 +102,11 @@ void EventWorker::wait_for_event() {
         continue;
       }
 
-			if  (arb.set_timestamp_and_serial_number() < 0) {
-				syslog(LOG_NOTICE, "Failed to build record timestamp/serial_number");
-				buffer.pop();
-				continue;
-			}
+      if (arb.set_timestamp_and_serial_number() < 0) {
+        syslog(LOG_NOTICE, "Failed to build record timestamp/serial_number");
+        buffer.pop();
+        continue;
+      }
 
       AuditRecord ar = arb.build();
       if (ofs.is_open())
@@ -123,21 +123,21 @@ std::string AuditRecordBuilder::get_field_value(const std::string &raw_data,
   if ((raw_data.empty()) || (field_name.empty()))
     return std::string();
 
-  std::string::size_type start, end;
-  if ((start = raw_data.find(field_name)) == std::string::npos) {
-		syslog(LOG_WARNING, "Failed to find field name");
-    return std::string();
-	}
+  std::string buff;
 
-  start += field_name.length() + 1; // Point to =
-  if ((end = raw_data.find(" ")) == std::string::npos) {
-		syslog(LOG_WARNING, "Failed to find following space");
-    return std::string();
-	}
+  std::istringstream iss(raw_data);
+  while (iss >> buff) {
+    std::string::size_type start;
+    if ((start = buff.find(field_name)) == std::string::npos) {
+      continue;
+    }
 
-	std::string rc = raw_data.substr(start, end);
-	syslog(LOG_NOTICE, "rc(%s) = %s", field_name.c_str(), rc.c_str());
-  return rc;
+    std::string rc = buff.substr(start + field_name.length() + 1);
+    // syslog(LOG_NOTICE, "rc(%s) = %s", field_name.c_str(), rc.c_str());
+    return rc;
+  }
+
+  return std::string();
 }
 
 int AuditRecordBuilder::set_type() {
@@ -166,14 +166,18 @@ int AuditRecordBuilder::set_timestamp_and_serial_number() {
   if (buff.empty())
     return -2;
   std::string::size_type paren, end;
-  if ((paren = buff.find_first_of('(')) == std::string::npos)
-    return -3;
-  if ((end = buff.find_first_of(paren, ':')) == std::string::npos)
-    return -4;
+  if ((paren = buff.find_first_of('(')) == std::string::npos) {
+		// syslog(LOG_NOTICE, "Failed to find data first paren");
+		return -3;
+	}
+  if ((end = buff.find_first_of(':')) == std::string::npos) {
+		// syslog(LOG_NOTICE, "Failed to find data colon");
+		return -3;
+	}
   // std::string raw = buff.substr(paren+1, end);
   au.timestamp = std::stod(buff.substr(paren + 1, end));
   paren = end + 1;
-  if ((end = buff.find_first_of(paren, ')')) == std::string::npos)
+  if ((end = buff.find_first_of(')')) == std::string::npos)
     return -5;
   au.serial_number = std::stol(buff.substr(paren, end));
 
