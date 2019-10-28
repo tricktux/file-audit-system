@@ -10,6 +10,7 @@
 #include "dictionary.h"
 #include "iniparser.h"
 #include <string>
+#include <unordered_map>
 #include <syslog.h>
 
 class IConfig {
@@ -21,6 +22,16 @@ public:
   virtual int load() = 0;
   virtual std::string get_string(const std::string &option,
                                  const std::string &def) const = 0;
+};
+
+/// Map option name with default value
+struct ConfigOptions {
+	std::unordered_map<std::string, std::string> opts;
+	ConfigOptions() {
+		opts["dir"] = "/etc";
+		opts["log"] = "/tmp/file-monitor.log";
+		opts["key"] = "file-monitor";
+	}
 };
 
 class IniConfig : public IConfig {
@@ -55,5 +66,7 @@ public:
     return pch;
   }
 };
+
+
 
 #endif
