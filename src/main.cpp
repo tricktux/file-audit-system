@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
   LinuxAudit la;
   if (la.init() < 0)
     return 5;
-  if (la.add_dir("/home/reinaldo/.cache") < 0)
+  if (la.add_dir("/etc") < 0)
     return 6;
 
   syslog(LOG_NOTICE, "Success adding new rule!!!");

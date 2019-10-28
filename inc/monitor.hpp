@@ -8,6 +8,7 @@
 #define MONITOR_HPP
 
 #include <condition_variable>
+#include <iomanip>
 #include <libaudit.h>
 #include <mutex>
 #include <queue>
@@ -68,21 +69,19 @@ public:
 };
 
 struct AuditRecord {
-	static const std::string TIME_FORMAT;
-	std::string type;
-	std::time_t timestamp;
-	long serial_number;
-	std::string raw_data;
+  static const std::string TIME_FORMAT;
+  std::string type;
+  std::string timestamp;
+  long serial_number;
+  std::string raw_data;
 
-	friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
-		os << "timestamp:"
-			<< std::put_time(std::localtime(&obj.timestamp), TIME_FORMAT.c_str())
-			<< ", "
-			<< "type:" << obj.type << ", "
-			<< "serial_number:" << obj.serial_number << ", "
-			<< "raw_data:" << obj.raw_data;
-		return os;
-	}
+  friend std::ostream &operator<<(std::ostream &os, const AuditRecord &obj) {
+    os << "timestamp:" << obj.timestamp << ", "
+       << "serial_number:" << obj.serial_number << ", "
+			 << "type:" << obj.type << ", "
+       << "raw_data:" << obj.raw_data;
+    return os;
+  }
 };
 
 class AuditRecordBuilder {

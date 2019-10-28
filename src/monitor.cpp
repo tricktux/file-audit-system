@@ -9,7 +9,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fstream>
-#include <iomanip>
 #include <libaudit.h>
 #include <locale.h>
 #include <signal.h>
@@ -142,7 +141,7 @@ std::string AuditRecordBuilder::get_field_value(const std::string &raw_data,
     }
 
     std::string rc = buff.substr(start + field_name.length() + 1);
-    // syslog(LOG_NOTICE, "rc(%s) = %s", field_name.c_str(), rc.c_str());
+		// syslog(LOG_NOTICE, "rc(%s) = %s", field_name.c_str(), rc.c_str());
     return rc;
   }
 
@@ -176,16 +175,21 @@ int AuditRecordBuilder::set_timestamp() {
     return -2;
   std::string::size_type paren, end;
   if ((paren = buff.find_first_of('(')) == std::string::npos) {
-    // syslog(LOG_NOTICE, "Failed to find data first paren");
+		syslog(LOG_NOTICE, "Failed to find timestamp first paren");
     return -3;
   }
   if ((end = buff.find_first_of(':')) == std::string::npos) {
-    // syslog(LOG_NOTICE, "Failed to find data colon");
-    return -3;
+		syslog(LOG_NOTICE, "Failed to find timestamp colon");
+    return -4;
   }
   double raw_timestamp = std::stod(buff.substr(paren + 1, end));
-  au.timestamp = (std::time_t)raw_timestamp;
-  // au.timestamp = std::put_time(std::localtime(&t), TIME_FORMAT.c_str());
+  std::time_t t = (std::time_t)raw_timestamp;
+	char mbstr[100];
+	if (!std::strftime(mbstr, sizeof(mbstr), "%F %T", std::localtime(&t))) {
+		syslog(LOG_NOTICE, "Failed to find strftime");
+    return -5;
+	}
+	au.timestamp = mbstr;
 
   return 0;
 }
@@ -197,19 +201,14 @@ int AuditRecordBuilder::set_serial_number() {
   if (buff.empty())
     return -2;
   std::string::size_type paren, end;
-  if ((paren = buff.find_first_of('(')) == std::string::npos) {
-    // syslog(LOG_NOTICE, "Failed to find data first paren");
+  if ((paren = buff.find_first_of(':')) == std::string::npos) {
+		syslog(LOG_NOTICE, "Failed to find serial first paren");
     return -3;
   }
-  if ((end = buff.find_first_of(':')) == std::string::npos) {
-    // syslog(LOG_NOTICE, "Failed to find data colon");
-    return -3;
+  if ((end = buff.find_first_of(')')) == std::string::npos) {
+		syslog(LOG_NOTICE, "Failed to find serial colon");
+    return -4;
   }
-  // std::string raw = buff.substr(paren+1, end);
-  au.timestamp = std::stod(buff.substr(paren + 1, end));
-  paren = end + 1;
-  if ((end = buff.find_first_of(')')) == std::string::npos)
-    return -5;
   au.serial_number = std::stol(buff.substr(paren, end));
 
   return 0;
