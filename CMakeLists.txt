@@ -34,35 +34,22 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 		"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-OPTION(ENABLE_ASAN "Enable ASAN" OFF)
-OPTION(ENABLE_USAN "Enable USAN" OFF)
-OPTION(ENABLE_TSAN "Enable TSAN" OFF)
+# Set sanitizers
+if (EXISTS "${CMAKE_SOURCE_DIR}/cmake/sanitizers")
+	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+		"${CMAKE_SOURCE_DIR}/cmake/sanitizers")
+	set (SANITIZERS_FOUND ON)
+endif ()
 
-IF(ENABLE_ASAN)
-	MESSAGE(STATUS "ASAN enabled")
-	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
-ENDIF()
-
-IF(ENABLE_USAN)
-	MESSAGE(STATUS "USAN enabled")
-	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined")
-ENDIF()
-
-IF(ENABLE_TSAN)
-	MESSAGE(STATUS "TSAN enabled")
-	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=thread")
-ENDIF()
-
-INCLUDE(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-
-# Build with c++11 support
-IF(COMPILER_SUPPORTS_CXX11)
-	SET(CMAKE_CXX_STANDARD 11)
-ELSE()
-	MESSAGE(FATAL_ERROR
-		"The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
-ENDIF()
+# Depends on clang and llvm being installed
+# cmake -DSANITIZE_ADDRESS=ON ..
+# ./bin/<executable_name>
+if (SANITIZERS_FOUND)
+	option(SANITIZE_ADDRESS "Enable Address Sanitizer" OFF)
+	option(SANITIZE_MEMORY "Enable Memory Sanitizer" OFF)
+	option(SANITIZE_THREAD "Enable Thread Sanitizer" OFF)
+	option(SANITIZE_UNDEFINED "Enable Undefined Behavior Sanitizer" OFF)
+endif ()
 
 # add flags to release mode
 SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS}")
@@ -87,6 +74,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 	"${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if (SANITIZERS_FOUND)
+	find_package(Sanitizers REQUIRED)
+endif ()
 
 add_subdirectory("src")
 

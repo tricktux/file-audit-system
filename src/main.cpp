@@ -60,10 +60,10 @@ int main(int argc, char *argv[]) {
   syslog(LOG_NOTICE, "Starting %s with %d args...", argv[0], argc);
 
   // Make sure we are root
-  if (getuid() != 0) {
-    syslog(LOG_ERR, "You must be root to run this program.");
-    return 4;
-  }
+  // if (getuid() != 0) {
+    // syslog(LOG_ERR, "You must be root to run this program.");
+    // return 4;
+  // }
 
   load_config();
 

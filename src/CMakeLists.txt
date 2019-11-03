@@ -11,6 +11,9 @@ endif ()
 
 # Set ExecutableName.
 add_executable(file-monitor ${SOURCES})
+if (SANITIZERS_FOUND)
+	add_sanitizers(file-monitor)
+endif ()
 
 target_link_libraries(file-monitor audit)
 target_link_libraries(file-monitor pthread)
